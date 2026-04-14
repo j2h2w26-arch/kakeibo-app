@@ -1,0 +1,165 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f5f5f5;
+  color: #333;
+}
+
+.app {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 24px;
+}
+
+.summary {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.summary-card {
+  flex: 1;
+  padding: 16px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.summary-card p {
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.summary-card h2 {
+  font-size: 20px;
+}
+
+.unpaid {
+  background: #ffe0e0;
+  color: #c0392b;
+}
+
+.paid {
+  background: #e0f0e0;
+  color: #27ae60;
+}
+
+.add-btn {
+  width: 100%;
+  padding: 12px;
+  background: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  margin-bottom: 16px;
+  cursor: pointer;
+}
+
+.form {
+  background: white;
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.form input,
+.form select {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+.form button {
+  padding: 12px;
+  background: #27ae60;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.loans {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.loan-card {
+  background: white;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+.loan-card.repaid {
+  opacity: 0.6;
+}
+
+.loan-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.loan-amount {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.loan-date {
+  color: #888;
+  font-size: 14px;
+}
+
+.loan-desc {
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.loan-people {
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 8px;
+}
+
+.repaid-date {
+  font-size: 13px;
+  color: #27ae60;
+  margin-bottom: 8px;
+}
+
+.loan-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.loan-actions button {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  background: #f0f0f0;
+}
+
+.delete-btn {
+  background: #ffe0e0 !important;
+  color: #c0392b;
+}
