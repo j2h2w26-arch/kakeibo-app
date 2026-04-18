@@ -30,8 +30,9 @@ function App() {
 
   async function addLoan() {
     if (!form.date || !form.amount || !form.description) return
+const formattedDate = form.date.replace(/\//g, '-')
     const { error } = await supabase.from('loans').insert([{
-      date: form.date,
+      date: formattedDate,
       amount: parseInt(form.amount),
       lender: form.lender,
       borrower: form.borrower,
