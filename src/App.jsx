@@ -40,7 +40,9 @@ const formattedDate = form.date.replace(/\//g, '-')
       is_repaid: false,
       repaid_at: null,
     }])
-    if (!error) {
+    if (error) {
+      alert('エラー: ' + error.message)
+    } else {
       setForm({ date: '', amount: '', lender: '夫', borrower: '妻', description: '' })
       setShowForm(false)
       fetchLoans()
@@ -105,10 +107,15 @@ const formattedDate = form.date.replace(/\//g, '-')
             value={form.amount}
             onChange={e => setForm({ ...form, amount: e.target.value })}
           />
-          <select
-            value={form.lender}
-            onChange={e => setForm({ ...form, lender: e.target.value })}
-          >
+1<select
+  value={form.lender}
+  onChange={e => setForm({ 
+    ...form, 
+    lender: e.target.value,
+    borrower: e.target.value === '夫' ? '妻' : '夫'
+  })}
+>
+
             <option value="夫">夫が貸した</option>
             <option value="妻">妻が貸した</option>
           </select>
