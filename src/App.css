@@ -163,3 +163,40 @@ h1 {
   background: #ffe0e0 !important;
   color: #c0392b;
 }
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.tab {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  background: #e0e0e0;
+  color: #666;
+  cursor: pointer;
+}
+
+.tab.active {
+  background: #4a90e2;
+  color: white;
+  font-weight: bold;
+}
+
+.section-title {
+  font-size: 15px;
+  color: #888;
+  margin: 16px 0 8px;
+}
+
+.category-badge {
+  font-size: 12px;
+  background: #e8f0fe;
+  color: #4a90e2;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
