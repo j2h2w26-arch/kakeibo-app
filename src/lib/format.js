@@ -36,7 +36,9 @@ export function calculateLoanSummary(loans, repaymentsByLoan) {
       (sum, repayment) => sum + Number(repayment.amount),
       0,
     )
-    const outstanding = Math.max(Number(loan.amount) - paid, 0)
+    const outstanding = loan.is_repaid
+      ? 0
+      : Math.max(Number(loan.amount) - paid, 0)
 
     totalRepaid += paid
     totalOutstanding += outstanding

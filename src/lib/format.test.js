@@ -28,6 +28,7 @@ test('repayments are grouped and loan summary calculates the net settlement', ()
     [
       { id: 10, lender: '夫', amount: 1000 },
       { id: 20, lender: '妻', amount: 500 },
+      { id: 30, lender: '妻', amount: 900, is_repaid: true },
     ],
     repayments,
   )
