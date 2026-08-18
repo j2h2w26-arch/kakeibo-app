@@ -9,9 +9,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'ふたりのお財布',
-        short_name: 'ふたり財布',
-        description: '夫婦の貸し借りと買い出しを、ふたりで管理するアプリ',
+        name: 'ふたりの暮らし',
+        short_name: 'ふたり暮らし',
+        description: 'お金、買い物、Wish、ポイ活をふたりで共有する家族アプリ',
         theme_color: '#6d5dfc',
         background_color: '#0c0d16',
         display: 'standalone',
@@ -19,7 +19,7 @@ export default defineConfig({
         start_url: '/',
         scope: '/',
         lang: 'ja',
-        categories: ['finance', 'lifestyle'],
+        categories: ['lifestyle', 'finance', 'shopping'],
         icons: [
           {
             src: '/pwa-192x192.png',
