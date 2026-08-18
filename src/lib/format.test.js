@@ -36,6 +36,7 @@ test('repayments are grouped and loan summary calculates the net settlement', ()
   assert.deepEqual(summary, {
     totalOutstanding: 1100,
     totalRepaid: 400,
+    openLoanCount: 2,
     netAmount: 300,
     netLabel: '妻から夫へ',
   })

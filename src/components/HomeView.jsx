@@ -44,7 +44,7 @@ export function HomeView({ member, loans, repayments, items, onNavigate }) {
     [loans, repayments],
   )
   const pendingItems = items.filter((item) => !item.is_purchased).length
-  const openLoans = loanSummary.openLoans.length
+  const openLoans = loanSummary.openLoanCount
 
   return (
     <section className="view home-view" aria-labelledby="home-title">

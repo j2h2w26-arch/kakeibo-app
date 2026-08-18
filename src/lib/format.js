@@ -30,6 +30,7 @@ export function calculateLoanSummary(loans, repaymentsByLoan) {
   let totalRepaid = 0
   let husbandLent = 0
   let wifeLent = 0
+  let openLoanCount = 0
 
   for (const loan of loans) {
     const paid = (repaymentsByLoan[loan.id] || []).reduce(
@@ -42,6 +43,7 @@ export function calculateLoanSummary(loans, repaymentsByLoan) {
 
     totalRepaid += paid
     totalOutstanding += outstanding
+    if (outstanding > 0) openLoanCount += 1
     if (loan.lender === '夫') husbandLent += outstanding
     if (loan.lender === '妻') wifeLent += outstanding
   }
@@ -50,6 +52,7 @@ export function calculateLoanSummary(loans, repaymentsByLoan) {
   return {
     totalOutstanding,
     totalRepaid,
+    openLoanCount,
     netAmount: Math.abs(net),
     netLabel: net > 0 ? '妻から夫へ' : net < 0 ? '夫から妻へ' : '精算なし',
   }
