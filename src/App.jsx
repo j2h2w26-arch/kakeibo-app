@@ -4,15 +4,19 @@ import { HomeView } from './components/HomeView'
 import { LoanView } from './components/LoanView'
 import { LoginScreen } from './components/LoginScreen'
 import { ShoppingView } from './components/ShoppingView'
+import { WishView } from './components/WishView'
 import { useHouseholdData } from './hooks/useHouseholdData'
 import {
   cancelRepayment,
   createLoan,
   createShoppingItem,
+  createWish,
   recordRepayment,
   removeLoan,
   removeShoppingItem,
+  removeWish,
   updateShoppingItem,
+  updateWish,
 } from './lib/data'
 import { messageFromError } from './lib/format'
 import { supabase } from './lib/supabase'
@@ -184,6 +188,7 @@ function App() {
         loans={snapshot.loans}
         repayments={snapshot.repayments}
         items={snapshot.items}
+        wishes={snapshot.wishes}
         onNavigate={setTab}
       />
     )
@@ -209,6 +214,26 @@ function App() {
         onCreate={(input) => runAction(() => createShoppingItem(input), '買い出しに追加しました')}
         onUpdate={(id, input) => runAction(() => updateShoppingItem(id, input), '買い出しを更新しました')}
         onDelete={(id) => runAction(() => removeShoppingItem(id), '買い出しから削除しました')}
+      />
+    )
+  } else if (tab === 'wishes') {
+    currentView = (
+      <WishView
+        wishes={snapshot.wishes}
+        online={online}
+        busy={busy}
+        onCreate={(input) => runAction(() => createWish(input), 'Wishを追加しました')}
+        onUpdate={(id, input) => runAction(() => updateWish(id, input), 'Wishを更新しました')}
+        onDelete={(id) => runAction(() => removeWish(id), 'Wishを削除しました')}
+        onAddToShopping={(wish) => runAction(
+          () => createShoppingItem({
+            name: wish.title,
+            category: 'その他',
+            is_purchased: false,
+            purchased_at: null,
+          }),
+          '買い物リストに追加しました',
+        )}
       />
     )
   } else {

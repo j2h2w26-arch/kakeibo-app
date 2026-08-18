@@ -25,7 +25,6 @@ const MODULES = [
     title: 'Wish',
     description: 'ふたりの欲しいもの',
     tone: 'rose',
-    upcoming: true,
   },
   {
     id: 'points',
@@ -38,12 +37,13 @@ const MODULES = [
   },
 ]
 
-export function HomeView({ member, loans, repayments, items, onNavigate }) {
+export function HomeView({ member, loans, repayments, items, wishes, onNavigate }) {
   const loanSummary = useMemo(
     () => calculateLoanSummary(loans, repayments),
     [loans, repayments],
   )
   const pendingItems = items.filter((item) => !item.is_purchased).length
+  const pendingWishes = wishes.filter((wish) => !wish.is_completed).length
   const openLoans = loanSummary.openLoanCount
 
   return (
@@ -74,7 +74,7 @@ export function HomeView({ member, loans, repayments, items, onNavigate }) {
         </article>
         <article>
           <span>Wish</span>
-          <strong className="status-copy">準備中</strong>
+          <strong>{pendingWishes}<small>件</small></strong>
         </article>
       </div>
 

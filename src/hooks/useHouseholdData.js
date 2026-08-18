@@ -2,13 +2,13 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { fetchHouseholdSnapshot } from '../lib/data'
 
-const CACHE_KEY = 'futari-wallet-cache-v1'
-const EMPTY_SNAPSHOT = { loans: [], repayments: {}, items: [] }
+const CACHE_KEY = 'futari-home-cache-v2'
+const EMPTY_SNAPSHOT = { loans: [], repayments: {}, items: [], wishes: [] }
 
 function readCache() {
   try {
     const cached = JSON.parse(localStorage.getItem(CACHE_KEY))
-    return cached?.snapshot || EMPTY_SNAPSHOT
+    return { ...EMPTY_SNAPSHOT, ...(cached?.snapshot || {}) }
   } catch {
     return EMPTY_SNAPSHOT
   }
@@ -52,10 +52,11 @@ export function useHouseholdData(enabled) {
     }
 
     const channel = supabase
-      .channel('futari-wallet-live')
+      .channel('futari-home-live')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'loans' }, queueRefresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'repayments' }, queueRefresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'shopping_items' }, queueRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'wishes' }, queueRefresh)
       .subscribe()
 
     return () => {

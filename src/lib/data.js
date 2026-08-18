@@ -7,16 +7,18 @@ function unwrap(result) {
 }
 
 export async function fetchHouseholdSnapshot() {
-  const [loansResult, repaymentsResult, itemsResult] = await Promise.all([
+  const [loansResult, repaymentsResult, itemsResult, wishesResult] = await Promise.all([
     supabase.from('loans').select('*').order('date', { ascending: false }),
     supabase.from('repayments').select('*').order('date', { ascending: false }),
     supabase.from('shopping_items').select('*').order('created_at', { ascending: false }),
+    supabase.from('wishes').select('*').order('created_at', { ascending: false }),
   ])
 
   const loans = unwrap(loansResult) || []
   const repayments = unwrap(repaymentsResult) || []
   const items = unwrap(itemsResult) || []
-  return { loans, repayments: mapRepayments(repayments), items }
+  const wishes = unwrap(wishesResult) || []
+  return { loans, repayments: mapRepayments(repayments), items, wishes }
 }
 
 export async function createLoan(input) {
@@ -52,4 +54,16 @@ export async function updateShoppingItem(id, input) {
 
 export async function removeShoppingItem(id) {
   unwrap(await supabase.from('shopping_items').delete().eq('id', id))
+}
+
+export async function createWish(input) {
+  unwrap(await supabase.from('wishes').insert([input]))
+}
+
+export async function updateWish(id, input) {
+  unwrap(await supabase.from('wishes').update(input).eq('id', id))
+}
+
+export async function removeWish(id) {
+  unwrap(await supabase.from('wishes').delete().eq('id', id))
 }
