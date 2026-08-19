@@ -1055,6 +1055,59 @@
   background: rgba(255, 127, 154, 0.13);
 }
 
+.wish-filter-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 5px 3px 8px;
+}
+
+.wish-filter-heading strong {
+  font-size: 12px;
+}
+
+.wish-filter-heading span {
+  color: var(--dim);
+  font-size: 9px;
+}
+
+.wish-owner-filter {
+  grid-template-columns: repeat(4, 1fr);
+  margin-bottom: 8px;
+}
+
+.wish-owner-filter button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.wish-owner-filter button small {
+  display: grid;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 99px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 8px;
+  place-items: center;
+}
+
+.wish-owner-filter button.active {
+  border-color: rgba(255, 158, 181, 0.34);
+  color: #ffe0e8;
+  background: rgba(255, 127, 154, 0.13);
+}
+
+.wish-owner-filter button.active small {
+  color: #ffe0e8;
+  background: rgba(255, 255, 255, 0.1);
+}
+
 .wish-list {
   display: grid;
   gap: 11px;
