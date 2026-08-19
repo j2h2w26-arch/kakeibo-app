@@ -17,6 +17,7 @@ export async function fetchHouseholdSnapshot() {
     loansResult,
     repaymentsResult,
     itemsResult,
+    inventoryItemsResult,
     wishesResult,
     pointActivitiesResult,
     pointCompletionsResult,
@@ -30,6 +31,7 @@ export async function fetchHouseholdSnapshot() {
     supabase.from('loans').select('*').order('date', { ascending: false }),
     supabase.from('repayments').select('*').order('date', { ascending: false }),
     supabase.from('shopping_items').select('*').order('created_at', { ascending: false }),
+    supabase.from('inventory_items').select('*').order('updated_at', { ascending: false }),
     supabase.from('wishes').select('*').order('created_at', { ascending: false }),
     supabase.from('point_activities').select('*').order('sort_order').order('created_at'),
     supabase.from('point_activity_completions').select('*').order('completed_at', { ascending: false }),
@@ -44,6 +46,7 @@ export async function fetchHouseholdSnapshot() {
   const loans = unwrap(loansResult) || []
   const repayments = unwrap(repaymentsResult) || []
   const items = unwrap(itemsResult) || []
+  const inventoryItems = unwrapOptional(inventoryItemsResult) || []
   const wishes = unwrap(wishesResult) || []
   const pointActivities = unwrap(pointActivitiesResult) || []
   const pointCompletions = unwrap(pointCompletionsResult) || []
@@ -65,6 +68,8 @@ export async function fetchHouseholdSnapshot() {
     loans,
     repayments: mapRepayments(repayments),
     items,
+    inventoryItems,
+    inventorySchemaReady: !inventoryItemsResult.error,
     wishes,
     pointActivities,
     pointCompletions,
@@ -115,6 +120,18 @@ export async function updateShoppingItem(id, input) {
 
 export async function removeShoppingItem(id) {
   unwrap(await supabase.from('shopping_items').delete().eq('id', id))
+}
+
+export async function createInventoryItem(input) {
+  unwrap(await supabase.from('inventory_items').insert([input]))
+}
+
+export async function updateInventoryItem(id, input) {
+  unwrap(await supabase.from('inventory_items').update(input).eq('id', id))
+}
+
+export async function removeInventoryItem(id) {
+  unwrap(await supabase.from('inventory_items').delete().eq('id', id))
 }
 
 export async function createWish(input) {
