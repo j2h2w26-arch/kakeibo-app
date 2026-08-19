@@ -1,5 +1,7 @@
 import { useMemo } from 'react'
-import { calculateLoanSummary, formatYen, pointPeriodKey } from '../lib/format'
+import { DailyReminderSettings } from './DailyReminderSettings'
+import { calculateLoanSummary, formatYen, pointPeriodKey, todayInTokyo } from '../lib/format'
+import { todaySummary } from '../lib/daily'
 import { inventoryNeedsRestock } from '../lib/inventory'
 
 const MODULES = [
@@ -45,6 +47,12 @@ export function HomeView({
   inventoryItems,
   pointActivities,
   pointCompletions,
+  wishes,
+  notificationPreferences,
+  notificationSchemaReady,
+  online,
+  busy,
+  onSaveNotification,
   onNavigate,
 }) {
   const loanSummary = useMemo(
@@ -54,6 +62,7 @@ export function HomeView({
   const pendingItems = items.filter((item) => !item.is_purchased).length
   const neededInventory = inventoryItems.filter(inventoryNeedsRestock).length
   const openLoans = loanSummary.openLoanCount
+  const today = todayInTokyo()
   const completedPointActions = pointActivities.filter((activity) => (
     activity.is_active
     && (!activity.assigned_to || activity.assigned_to === member.user_id)
@@ -63,6 +72,15 @@ export function HomeView({
       && completion.period_key === pointPeriodKey(activity.frequency)
     ))
   )).length
+  const summary = useMemo(() => todaySummary({
+    items,
+    inventoryItems,
+    pointActivities,
+    pointCompletions,
+    wishes,
+    memberId: member.user_id,
+    today,
+  }), [items, inventoryItems, member.user_id, pointActivities, pointCompletions, today, wishes])
 
   return (
     <section className="view home-view" aria-labelledby="home-title">
@@ -95,6 +113,40 @@ export function HomeView({
           <strong>{neededInventory}<small>件</small></strong>
         </article>
       </div>
+
+      <section className="today-summary" aria-labelledby="today-summary-title">
+        <div className="today-summary-heading">
+          <div>
+            <p className="eyebrow">TODAY</p>
+            <h3 id="today-summary-title">今日のまとめ</h3>
+          </div>
+          <span>開けば最新</span>
+        </div>
+        <div className="today-summary-grid">
+          <button type="button" onClick={() => onNavigate('shopping')}>
+            <span>買うもの</span><strong>{summary.shopping}</strong><small>件</small>
+          </button>
+          <button type="button" onClick={() => onNavigate('shopping')}>
+            <span>期限間近</span><strong>{summary.expiring}</strong><small>件</small>
+          </button>
+          <button type="button" onClick={() => onNavigate('points')}>
+            <span>ポイ活Todo</span><strong>{summary.points}</strong><small>件</small>
+          </button>
+          <button type="button" onClick={() => onNavigate('wishes')}>
+            <span>30日以内のWish</span><strong>{summary.wishPlans}</strong><small>件</small>
+          </button>
+        </div>
+      </section>
+
+      {notificationSchemaReady && (
+        <DailyReminderSettings
+          key={notificationPreferences?.updated_at || 'notification-default'}
+          preferences={notificationPreferences}
+          online={online}
+          busy={busy}
+          onSave={onSaveNotification}
+        />
+      )}
 
       <div className="home-section-heading">
         <div>
