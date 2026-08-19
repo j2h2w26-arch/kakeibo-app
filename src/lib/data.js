@@ -18,7 +18,10 @@ export async function fetchHouseholdSnapshot() {
     repaymentsResult,
     itemsResult,
     inventoryItemsResult,
+    expensesResult,
     wishesResult,
+    wishCommentsResult,
+    notificationPreferencesResult,
     pointActivitiesResult,
     pointCompletionsResult,
     pointSourcesResult,
@@ -32,7 +35,10 @@ export async function fetchHouseholdSnapshot() {
     supabase.from('repayments').select('*').order('date', { ascending: false }),
     supabase.from('shopping_items').select('*').order('created_at', { ascending: false }),
     supabase.from('inventory_items').select('*').order('updated_at', { ascending: false }),
+    supabase.from('household_expenses').select('*').order('spent_on', { ascending: false }).order('created_at', { ascending: false }),
     supabase.from('wishes').select('*').order('created_at', { ascending: false }),
+    supabase.from('wish_comments').select('*').order('created_at'),
+    supabase.from('notification_preferences').select('*').maybeSingle(),
     supabase.from('point_activities').select('*').order('sort_order').order('created_at'),
     supabase.from('point_activity_completions').select('*').order('completed_at', { ascending: false }),
     supabase.from('point_sources').select('*').order('id'),
@@ -47,7 +53,13 @@ export async function fetchHouseholdSnapshot() {
   const repayments = unwrap(repaymentsResult) || []
   const items = unwrap(itemsResult) || []
   const inventoryItems = unwrapOptional(inventoryItemsResult) || []
+  const expenses = unwrapOptional(expensesResult) || []
   const wishes = unwrap(wishesResult) || []
+  const wishComments = unwrapOptional(wishCommentsResult) || []
+  const notificationPreferences = notificationPreferencesResult.error
+    && !['42P01', 'PGRST205', 'PGRST116'].includes(notificationPreferencesResult.error.code)
+    ? unwrapOptional(notificationPreferencesResult)
+    : notificationPreferencesResult.data
   const pointActivities = unwrap(pointActivitiesResult) || []
   const pointCompletions = unwrap(pointCompletionsResult) || []
   const pointSources = unwrapOptional(pointSourcesResult) || []
@@ -70,7 +82,13 @@ export async function fetchHouseholdSnapshot() {
     items,
     inventoryItems,
     inventorySchemaReady: !inventoryItemsResult.error,
+    expenses,
+    expenseSchemaReady: !expensesResult.error,
     wishes,
+    wishComments,
+    wishConsultationSchemaReady: !wishCommentsResult.error,
+    notificationPreferences,
+    notificationSchemaReady: !notificationPreferencesResult.error,
     pointActivities,
     pointCompletions,
     pointSources,
@@ -134,6 +152,52 @@ export async function removeInventoryItem(id) {
   unwrap(await supabase.from('inventory_items').delete().eq('id', id))
 }
 
+function receiptExtension(file) {
+  const extensions = {
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/webp': 'webp',
+    'image/heic': 'heic',
+    'image/heif': 'heif',
+  }
+  return extensions[file.type] || 'jpg'
+}
+
+export async function createExpense(input, receipt, userId) {
+  let receiptPath = null
+  if (receipt) {
+    receiptPath = `${userId}/${crypto.randomUUID()}.${receiptExtension(receipt)}`
+    const upload = await supabase.storage.from('receipts').upload(receiptPath, receipt, {
+      cacheControl: '3600',
+      contentType: receipt.type || 'image/jpeg',
+      upsert: false,
+    })
+    if (upload.error) throw upload.error
+  }
+
+  const result = await supabase.from('household_expenses').insert([{
+    ...input,
+    created_by: userId,
+    receipt_path: receiptPath,
+  }])
+  if (result.error) {
+    if (receiptPath) await supabase.storage.from('receipts').remove([receiptPath])
+    throw result.error
+  }
+}
+
+export async function removeExpense(expense) {
+  if (expense.receipt_path) {
+    unwrap(await supabase.storage.from('receipts').remove([expense.receipt_path]))
+  }
+  unwrap(await supabase.from('household_expenses').delete().eq('id', expense.id))
+}
+
+export async function createReceiptUrl(path) {
+  const data = unwrap(await supabase.storage.from('receipts').createSignedUrl(path, 60))
+  return data.signedUrl
+}
+
 export async function createWish(input) {
   unwrap(await supabase.from('wishes').insert([input]))
 }
@@ -144,6 +208,21 @@ export async function updateWish(id, input) {
 
 export async function removeWish(id) {
   unwrap(await supabase.from('wishes').delete().eq('id', id))
+}
+
+export async function createWishComment(input) {
+  unwrap(await supabase.from('wish_comments').insert([input]))
+}
+
+export async function removeWishComment(id) {
+  unwrap(await supabase.from('wish_comments').delete().eq('id', id))
+}
+
+export async function saveNotificationPreferences(input) {
+  unwrap(await supabase.from('notification_preferences').upsert({
+    ...input,
+    updated_at: new Date().toISOString(),
+  }, { onConflict: 'user_id' }))
 }
 
 export async function createPointActivity(input) {
