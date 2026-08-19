@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { ExpensePanel } from './ExpensePanel'
 import {
   calculateLoanSummary,
   formatDate,
@@ -25,7 +26,12 @@ export function LoanView({
   onDelete,
   onRepay,
   onCancelRepayment,
+  expenses,
+  onCreateExpense,
+  onDeleteExpense,
+  onOpenReceipt,
 }) {
+  const [mode, setMode] = useState('balance')
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(EMPTY_LOAN)
   const [formError, setFormError] = useState('')
@@ -100,10 +106,10 @@ export function LoanView({
     <section className="view" aria-labelledby="loans-title">
       <div className="view-heading">
         <div>
-          <p className="eyebrow">BALANCE</p>
-          <h2 id="loans-title">貸し借り</h2>
+          <p className="eyebrow">MONEY</p>
+          <h2 id="loans-title">ふたりのお金</h2>
         </div>
-        <button
+        {mode === 'balance' && <button
           className="round-add-button"
           type="button"
           onClick={() => setShowForm((value) => !value)}
@@ -111,8 +117,25 @@ export function LoanView({
         >
           {showForm ? '×' : '＋'}
           <span className="sr-only">新規登録</span>
-        </button>
+        </button>}
       </div>
+
+      <div className="money-mode-tabs" aria-label="お金の表示切り替え">
+        <button className={mode === 'balance' ? 'active' : ''} type="button" onClick={() => setMode('balance')}>貸し借り</button>
+        <button className={mode === 'expenses' ? 'active' : ''} type="button" onClick={() => setMode('expenses')}>家計簿</button>
+      </div>
+
+      {mode === 'expenses' ? (
+        <ExpensePanel
+          expenses={expenses}
+          online={online}
+          busy={busy}
+          onCreate={onCreateExpense}
+          onDelete={onDeleteExpense}
+          onOpenReceipt={onOpenReceipt}
+        />
+      ) : (
+        <>
 
       <div className="balance-card">
         <div>
@@ -323,6 +346,8 @@ export function LoanView({
           )
         })}
       </div>
+        </>
+      )}
     </section>
   )
 }

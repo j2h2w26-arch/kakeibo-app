@@ -2,14 +2,20 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { fetchHouseholdSnapshot } from '../lib/data'
 
-const CACHE_KEY = 'futari-home-cache-v5'
+const CACHE_KEY = 'futari-home-cache-v6'
 const EMPTY_SNAPSHOT = {
   loans: [],
   repayments: {},
   items: [],
   inventoryItems: [],
   inventorySchemaReady: false,
+  expenses: [],
+  expenseSchemaReady: false,
   wishes: [],
+  wishComments: [],
+  wishConsultationSchemaReady: false,
+  notificationPreferences: null,
+  notificationSchemaReady: false,
   pointActivities: [],
   pointCompletions: [],
   pointSources: [],
@@ -84,6 +90,18 @@ export function useHouseholdData(enabled) {
       )
     }
 
+    if (snapshot.expenseSchemaReady) {
+      channel = channel.on('postgres_changes', { event: '*', schema: 'public', table: 'household_expenses' }, queueRefresh)
+    }
+
+    if (snapshot.wishConsultationSchemaReady) {
+      channel = channel.on('postgres_changes', { event: '*', schema: 'public', table: 'wish_comments' }, queueRefresh)
+    }
+
+    if (snapshot.notificationSchemaReady) {
+      channel = channel.on('postgres_changes', { event: '*', schema: 'public', table: 'notification_preferences' }, queueRefresh)
+    }
+
     if (snapshot.pointCampaignSchemaReady) {
       for (const table of [
         'point_sources',
@@ -103,7 +121,15 @@ export function useHouseholdData(enabled) {
       window.clearTimeout(timerRef.current)
       supabase.removeChannel(channel)
     }
-  }, [enabled, refresh, snapshot.inventorySchemaReady, snapshot.pointCampaignSchemaReady])
+  }, [
+    enabled,
+    refresh,
+    snapshot.expenseSchemaReady,
+    snapshot.inventorySchemaReady,
+    snapshot.notificationSchemaReady,
+    snapshot.pointCampaignSchemaReady,
+    snapshot.wishConsultationSchemaReady,
+  ])
 
   return { snapshot, loading, syncState, error, refresh }
 }

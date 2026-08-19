@@ -9,6 +9,8 @@ import {
   statusForQuantity,
 } from '../lib/inventory'
 import { normalizeShoppingName } from '../lib/shopping'
+import { daysUntil } from '../lib/daily'
+import { todayInTokyo } from '../lib/format'
 
 const CATEGORIES = ['食材', '日用品', 'その他']
 const SUGGESTED_ITEMS = [
@@ -25,6 +27,7 @@ const EMPTY_FORM = {
   status: 'enough',
   quantity: '',
   unit: '個',
+  expires_on: '',
   note: '',
 }
 
@@ -47,6 +50,7 @@ function inventoryFormFrom(item) {
     status: item.status,
     quantity: item.quantity ?? '',
     unit: item.unit ?? '個',
+    expires_on: item.expires_on ?? '',
     note: item.note ?? '',
   }
 }
@@ -126,6 +130,7 @@ export function InventoryPanel({
       status: quantity === 0 ? 'out' : form.status,
       quantity,
       unit: quantity === null ? null : form.unit,
+      expires_on: form.expires_on || null,
       note: form.note.trim() || null,
     }
     const success = editingId
@@ -248,6 +253,14 @@ export function InventoryPanel({
             </label>
           </div>
           <label>
+            <span>賞味・使用期限（任意）</span>
+            <input
+              type="date"
+              value={form.expires_on}
+              onChange={(event) => setForm({ ...form, expires_on: event.target.value })}
+            />
+          </label>
+          <label>
             <span>メモ（任意）</span>
             <input
               type="text"
@@ -297,6 +310,7 @@ export function InventoryPanel({
         )}
         {shownItems.map((item) => {
           const inShopping = pendingNames.has(normalizeShoppingName(item.name))
+          const expiryDays = daysUntil(item.expires_on, todayInTokyo())
           return (
             <article className={`inventory-card status-${item.status}`} key={item.id}>
               <div className="inventory-card-heading">
@@ -307,6 +321,15 @@ export function InventoryPanel({
                 <button type="button" onClick={() => startEdit(item)}>編集</button>
               </div>
               {item.note && <p>{item.note}</p>}
+              {expiryDays !== null && (
+                <p className={`inventory-expiry ${expiryDays <= 7 ? 'soon' : ''}`}>
+                  {expiryDays < 0
+                    ? `期限切れから${Math.abs(expiryDays)}日`
+                    : expiryDays === 0
+                      ? '期限は今日'
+                      : `期限まで${expiryDays}日`}
+                </p>
+              )}
               <div className="inventory-status-buttons" aria-label={`${item.name}の在庫状況`}>
                 {INVENTORY_STATUSES.map((status) => (
                   <button

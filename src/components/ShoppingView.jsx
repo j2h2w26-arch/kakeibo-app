@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { InventoryPanel } from './InventoryPanel'
+import { frequentShoppingItems } from '../lib/daily'
 import { todayInTokyo } from '../lib/format'
 import { inventoryNeedsRestock } from '../lib/inventory'
 import { normalizeShoppingName, parseShoppingItems } from '../lib/shopping'
@@ -37,6 +38,7 @@ export function ShoppingView({
   const inventoryByName = useMemo(() => new Map(
     inventoryItems.map((item) => [normalizeShoppingName(item.name), item]),
   ), [inventoryItems])
+  const frequentItems = useMemo(() => frequentShoppingItems(items), [items])
 
   async function submitItem(event) {
     event.preventDefault()
@@ -123,6 +125,31 @@ export function ShoppingView({
         />
       ) : (
         <>
+          {frequentItems.length > 0 && (
+            <div className="frequent-shopping">
+              <div>
+                <strong>いつもの</strong>
+                <span>購入履歴からワンタップ追加</span>
+              </div>
+              <div className="frequent-shopping-chips">
+                {frequentItems.map((item) => (
+                  <button
+                    type="button"
+                    key={normalizeShoppingName(item.name)}
+                    disabled={!online || busy}
+                    onClick={() => onCreateMany([{
+                      name: item.name,
+                      category: item.category,
+                      is_purchased: false,
+                      purchased_at: null,
+                    }])}
+                  >
+                    ＋ {item.name}{item.count > 1 ? ` ×${item.count}` : ''}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <form className="quick-add" onSubmit={submitItem}>
             <div className="quick-add-main">
               <input
