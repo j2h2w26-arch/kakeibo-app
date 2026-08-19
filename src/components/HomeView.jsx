@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { calculateLoanSummary, formatYen, pointPeriodKey } from '../lib/format'
+import { inventoryNeedsRestock } from '../lib/inventory'
 
 const MODULES = [
   {
@@ -15,7 +16,7 @@ const MODULES = [
     icon: '✓',
     eyebrow: 'SHOPPING',
     title: '買い物',
-    description: '買い出しメモを共有',
+    description: '買い物と家の在庫を共有',
     tone: 'cyan',
   },
   {
@@ -41,7 +42,7 @@ export function HomeView({
   loans,
   repayments,
   items,
-  wishes,
+  inventoryItems,
   pointActivities,
   pointCompletions,
   onNavigate,
@@ -51,7 +52,7 @@ export function HomeView({
     [loans, repayments],
   )
   const pendingItems = items.filter((item) => !item.is_purchased).length
-  const pendingWishes = wishes.filter((wish) => !wish.is_completed).length
+  const neededInventory = inventoryItems.filter(inventoryNeedsRestock).length
   const openLoans = loanSummary.openLoanCount
   const completedPointActions = pointActivities.filter((activity) => (
     activity.is_active
@@ -90,8 +91,8 @@ export function HomeView({
           <strong>{pendingItems}<small>件</small></strong>
         </article>
         <article>
-          <span>Wish</span>
-          <strong>{pendingWishes}<small>件</small></strong>
+          <span>在庫不足</span>
+          <strong>{neededInventory}<small>件</small></strong>
         </article>
       </div>
 
@@ -117,7 +118,9 @@ export function HomeView({
               <strong>{module.title}</strong>
               <span>{module.description}</span>
             </span>
-            {module.id === 'points' && pointActivities.some((activity) => (
+            {module.id === 'shopping' && neededInventory > 0
+              ? <em>{neededInventory} 要確認</em>
+              : module.id === 'points' && pointActivities.some((activity) => (
               activity.is_active && (!activity.assigned_to || activity.assigned_to === member.user_id)
             ))
               ? <em>{completedPointActions} DONE</em>

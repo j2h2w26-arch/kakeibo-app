@@ -2060,6 +2060,325 @@
 .loading-dots span:nth-child(2) { animation-delay: 0.15s; }
 .loading-dots span:nth-child(3) { animation-delay: 0.3s; }
 
+.shopping-mode-tabs,
+.inventory-filter {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  margin-bottom: 18px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.shopping-mode-tabs button,
+.inventory-filter button {
+  min-height: 43px;
+  border: 0;
+  border-radius: 12px;
+  color: var(--muted);
+  background: transparent;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.shopping-mode-tabs button.active,
+.inventory-filter button.active {
+  color: white;
+  background: linear-gradient(135deg, rgba(124, 109, 253, 0.36), rgba(53, 183, 216, 0.18));
+  box-shadow: inset 0 0 0 1px rgba(139, 124, 255, 0.2);
+}
+
+.shopping-mode-tabs span,
+.inventory-filter span {
+  margin-left: 4px;
+  color: #a9a2ff;
+}
+
+.inventory-summary {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 14px;
+  margin-bottom: 14px;
+  padding: 18px;
+  border: 1px solid rgba(117, 216, 239, 0.17);
+  border-radius: 20px;
+  background: linear-gradient(140deg, rgba(38, 41, 62, 0.9), rgba(23, 36, 48, 0.9));
+}
+
+.inventory-summary > div span,
+.inventory-summary > div strong {
+  display: block;
+}
+
+.inventory-summary > div span {
+  margin-bottom: 3px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.inventory-summary > div strong {
+  font-size: 25px;
+}
+
+.inventory-summary small {
+  margin-left: 3px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.inventory-summary p {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  margin: 0;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.inventory-summary > button {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: center;
+  min-height: 38px;
+  padding: 0 13px;
+  border: 1px solid rgba(139, 124, 255, 0.28);
+  border-radius: 12px;
+  color: #dedaff;
+  background: rgba(124, 109, 253, 0.13);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.panel-form-heading button,
+.inventory-card-heading button,
+.inventory-audit button {
+  border: 0;
+  color: var(--muted);
+  background: transparent;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.inventory-status-choice,
+.inventory-status-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin: 13px 0;
+}
+
+.inventory-status-choice button,
+.inventory-status-buttons button {
+  min-height: 39px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.025);
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.inventory-status-choice button.active.status-enough,
+.inventory-status-buttons button.active.status-enough {
+  border-color: rgba(99, 213, 161, 0.35);
+  color: #9cebc5;
+  background: rgba(99, 213, 161, 0.12);
+}
+
+.inventory-status-choice button.active.status-low,
+.inventory-status-buttons button.active.status-low {
+  border-color: rgba(255, 203, 107, 0.38);
+  color: #ffd684;
+  background: rgba(255, 203, 107, 0.12);
+}
+
+.inventory-status-choice button.active.status-out,
+.inventory-status-buttons button.active.status-out {
+  border-color: rgba(255, 127, 154, 0.38);
+  color: #ff9eb5;
+  background: rgba(255, 127, 154, 0.12);
+}
+
+.inventory-quantity-fields {
+  display: grid;
+  grid-template-columns: 1fr 0.7fr;
+  gap: 8px;
+}
+
+.inventory-quantity-fields select {
+  width: 100%;
+  min-height: 47px;
+  padding: 11px 13px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--text);
+  background: #11121e;
+  font-size: 14px;
+}
+
+.inventory-onboarding {
+  margin-bottom: 14px;
+  padding: 18px;
+  border: 1px dashed rgba(139, 124, 255, 0.28);
+  border-radius: 18px;
+  background: rgba(124, 109, 253, 0.055);
+}
+
+.inventory-onboarding strong {
+  font-size: 13px;
+}
+
+.inventory-onboarding p {
+  margin: 5px 0 13px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.inventory-onboarding > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.inventory-onboarding button {
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  color: #d7d4eb;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.inventory-filter {
+  margin-top: 14px;
+  margin-bottom: 12px;
+}
+
+.inventory-list {
+  display: grid;
+  gap: 10px;
+}
+
+.inventory-card {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-left: 3px solid rgba(99, 213, 161, 0.55);
+  border-radius: 18px;
+  background: var(--surface-soft);
+}
+
+.inventory-card.status-low { border-left-color: rgba(255, 203, 107, 0.78); }
+.inventory-card.status-out { border-left-color: rgba(255, 127, 154, 0.78); }
+
+.inventory-card-heading,
+.inventory-card-bottom,
+.inventory-audit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.inventory-card-heading span {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.inventory-card-heading h3 {
+  margin: 2px 0 0;
+  font-size: 16px;
+}
+
+.inventory-card > p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.inventory-stepper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inventory-stepper button {
+  width: 29px;
+  height: 29px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  color: white;
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+}
+
+.inventory-stepper strong {
+  min-width: 40px;
+  text-align: center;
+}
+
+.inventory-stepper small {
+  margin-left: 2px;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.inventory-no-count {
+  color: var(--dim);
+  font-size: 10px;
+}
+
+.inventory-shopping-button,
+.replenish-button {
+  min-height: 34px;
+  padding: 0 11px;
+  border: 1px solid rgba(117, 216, 239, 0.25);
+  border-radius: 10px;
+  color: #91e6f8;
+  background: rgba(53, 183, 216, 0.1);
+  font-size: 9px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.inventory-shopping-button.added {
+  color: var(--muted);
+  border-color: var(--line);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.inventory-audit {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.055);
+}
+
+.inventory-audit span {
+  color: var(--dim);
+  font-size: 8px;
+}
+
+.inventory-audit button {
+  color: #ff9eb5;
+}
+
+.inventory-unavailable {
+  margin-top: 18px;
+}
+
+.replenish-button {
+  flex: 0 0 auto;
+  min-height: 31px;
+  padding: 0 8px;
+}
+
 @keyframes view-in {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }

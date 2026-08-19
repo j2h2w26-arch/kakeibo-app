@@ -2,11 +2,13 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { fetchHouseholdSnapshot } from '../lib/data'
 
-const CACHE_KEY = 'futari-home-cache-v4'
+const CACHE_KEY = 'futari-home-cache-v5'
 const EMPTY_SNAPSHOT = {
   loans: [],
   repayments: {},
   items: [],
+  inventoryItems: [],
+  inventorySchemaReady: false,
   wishes: [],
   pointActivities: [],
   pointCompletions: [],
@@ -74,6 +76,14 @@ export function useHouseholdData(enabled) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'point_activities' }, queueRefresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'point_activity_completions' }, queueRefresh)
 
+    if (snapshot.inventorySchemaReady) {
+      channel = channel.on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'inventory_items' },
+        queueRefresh,
+      )
+    }
+
     if (snapshot.pointCampaignSchemaReady) {
       for (const table of [
         'point_sources',
@@ -93,7 +103,7 @@ export function useHouseholdData(enabled) {
       window.clearTimeout(timerRef.current)
       supabase.removeChannel(channel)
     }
-  }, [enabled, refresh, snapshot.pointCampaignSchemaReady])
+  }, [enabled, refresh, snapshot.inventorySchemaReady, snapshot.pointCampaignSchemaReady])
 
   return { snapshot, loading, syncState, error, refresh }
 }

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { parseShoppingItems } from './shopping.js'
+import { normalizeShoppingName, parseShoppingItems } from './shopping.js'
 
 test('「と」で並べた買い物を個別の項目にする', () => {
   assert.deepEqual(
@@ -30,4 +30,9 @@ test('商品名に含まれるひらがなの「と」は分割しない', () =>
 
 test('ひらがなだけの項目は空白付きの「と」で分割できる', () => {
   assert.deepEqual(parseShoppingItems('たまご と ねぎ'), ['たまご', 'ねぎ'])
+})
+
+test('全角半角と前後の空白をそろえて重複判定できる', () => {
+  assert.equal(normalizeShoppingName('　ＴＩＳＳＵＥ '), 'tissue')
+  assert.deepEqual(parseShoppingItems('卵、 卵'), ['卵'])
 })

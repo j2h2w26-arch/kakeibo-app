@@ -10,16 +10,19 @@ import {
   cancelRepayment,
   completePointActivity,
   createPointActivity,
+  createInventoryItem,
   createLoan,
   createShoppingItem,
   createShoppingItems,
   createWish,
   recordRepayment,
   removeLoan,
+  removeInventoryItem,
   removePointActivity,
   removeShoppingItem,
   removeWish,
   updateShoppingItem,
+  updateInventoryItem,
   updatePointActivity,
   updateWish,
   undoPointActivityCompletion,
@@ -197,7 +200,7 @@ function App() {
         loans={snapshot.loans}
         repayments={snapshot.repayments}
         items={snapshot.items}
-        wishes={snapshot.wishes}
+        inventoryItems={snapshot.inventoryItems}
         pointActivities={snapshot.pointActivities}
         pointCompletions={snapshot.pointCompletions}
         onNavigate={setTab}
@@ -220,6 +223,9 @@ function App() {
     currentView = (
       <ShoppingView
         items={snapshot.items}
+        inventoryItems={snapshot.inventoryItems}
+        inventorySchemaReady={snapshot.inventorySchemaReady}
+        memberId={member.user_id}
         online={online}
         busy={busy}
         onCreateMany={(inputs) => runAction(
@@ -228,6 +234,37 @@ function App() {
         )}
         onUpdate={(id, input) => runAction(() => updateShoppingItem(id, input), '買い出しを更新しました')}
         onDelete={(id) => runAction(() => removeShoppingItem(id), '買い出しから削除しました')}
+        onCreateInventory={(input) => runAction(
+          () => createInventoryItem({ ...input, updated_by: member.user_id }),
+          '在庫に追加しました',
+        )}
+        onUpdateInventory={(id, input) => runAction(
+          () => updateInventoryItem(id, {
+            ...input,
+            updated_by: member.user_id,
+            updated_at: new Date().toISOString(),
+          }),
+          '在庫を更新しました',
+        )}
+        onDeleteInventory={(id) => runAction(() => removeInventoryItem(id), '在庫から削除しました')}
+        onAddInventoryToShopping={(item) => runAction(
+          () => createShoppingItem({
+            name: item.name,
+            category: item.category,
+            is_purchased: false,
+            purchased_at: null,
+          }),
+          '買うものに追加しました',
+        )}
+        onReplenishInventory={(item) => runAction(
+          () => updateInventoryItem(item.id, {
+            status: 'enough',
+            quantity: item.quantity === null ? null : Number(item.quantity) + 1,
+            updated_by: member.user_id,
+            updated_at: new Date().toISOString(),
+          }),
+          '在庫を補充しました',
+        )}
       />
     )
   } else if (tab === 'wishes') {
