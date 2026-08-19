@@ -1,27 +1,35 @@
-import { useState } from 'react'
-import { formatYen, parsePositiveYen } from '../lib/format'
+import { useMemo, useState } from 'react'
+import { formatDate, formatYen, parsePositiveYen } from '../lib/format'
 
 const PRIORITIES = ['いつか', 'ほしい', '最優先']
 const WANTED_BY = ['夫', '妻', 'ふたり']
+const WISH_TYPES = ['買いたい', '行きたい', 'やりたい']
+const CONSULTATION_STATUSES = ['相談中', '決定', '見送り']
 
 const EMPTY_WISH = () => ({
   title: '',
+  wish_type: '買いたい',
+  consultation_status: '相談中',
   wanted_by: 'ふたり',
   priority: 'ほしい',
   price: '',
   url: '',
   target_month: '',
+  candidate_date: '',
   note: '',
 })
 
 function formFromWish(wish) {
   return {
     title: wish.title,
+    wish_type: wish.wish_type || '買いたい',
+    consultation_status: wish.consultation_status || '相談中',
     wanted_by: wish.wanted_by,
     priority: wish.priority,
     price: wish.price ? String(wish.price) : '',
     url: wish.url || '',
     target_month: wish.target_month?.slice(0, 7) || '',
+    candidate_date: wish.candidate_date || '',
     note: wish.note || '',
   }
 }
@@ -44,18 +52,29 @@ function validHttpUrl(value) {
 
 export function WishView({
   wishes,
+  comments,
+  memberId,
   online,
   busy,
   onCreate,
   onUpdate,
   onDelete,
   onAddToShopping,
+  onAddComment,
+  onDeleteComment,
 }) {
   const [filter, setFilter] = useState('open')
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState(EMPTY_WISH)
   const [error, setError] = useState('')
+  const [commentDrafts, setCommentDrafts] = useState({})
+
+  const commentsByWish = useMemo(() => comments.reduce((map, comment) => {
+    if (!map[comment.wish_id]) map[comment.wish_id] = []
+    map[comment.wish_id].push(comment)
+    return map
+  }, {}), [comments])
 
   const openWishes = wishes.filter((wish) => !wish.is_completed)
   const visibleWishes = wishes.filter((wish) => {
@@ -100,11 +119,14 @@ export function WishView({
 
     const input = {
       title,
+      wish_type: form.wish_type,
+      consultation_status: form.consultation_status,
       wanted_by: form.wanted_by,
       priority: form.priority,
       price,
       url: url || null,
       target_month: form.target_month ? `${form.target_month}-01` : null,
+      candidate_date: form.candidate_date || null,
       note: form.note.trim() || null,
       updated_at: new Date().toISOString(),
     }
@@ -120,6 +142,14 @@ export function WishView({
       completed_at: wish.is_completed ? null : new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
+  }
+
+  async function submitComment(event, wishId) {
+    event.preventDefault()
+    const body = (commentDrafts[wishId] || '').trim()
+    if (!body) return
+    const success = await onAddComment(wishId, body)
+    if (success) setCommentDrafts({ ...commentDrafts, [wishId]: '' })
   }
 
   return (
@@ -164,6 +194,20 @@ export function WishView({
           </label>
           <div className="form-grid wish-form-grid">
             <label>
+              <span>種類</span>
+              <select value={form.wish_type} onChange={(event) => setForm({ ...form, wish_type: event.target.value })}>
+                {WISH_TYPES.map((value) => <option key={value}>{value}</option>)}
+              </select>
+            </label>
+            <label>
+              <span>相談状況</span>
+              <select value={form.consultation_status} onChange={(event) => setForm({ ...form, consultation_status: event.target.value })}>
+                {CONSULTATION_STATUSES.map((value) => <option key={value}>{value}</option>)}
+              </select>
+            </label>
+          </div>
+          <div className="form-grid wish-form-grid">
+            <label>
               <span>誰のWish？</span>
               <select
                 value={form.wanted_by}
@@ -182,6 +226,10 @@ export function WishView({
               </select>
             </label>
           </div>
+          <label>
+            <span>候補日（任意）</span>
+            <input type="date" value={form.candidate_date} onChange={(event) => setForm({ ...form, candidate_date: event.target.value })} />
+          </label>
           <div className="form-grid wish-form-grid">
             <label>
               <span>目安価格（任意）</span>
@@ -262,20 +310,21 @@ export function WishView({
         {visibleWishes.map((wish) => (
           <article className={`wish-card priority-${wish.priority} ${wish.is_completed ? 'is-complete' : ''}`} key={wish.id}>
             <div className="wish-card-topline">
-              <span className="wish-person">{wish.wanted_by}</span>
-              <span className="wish-priority">{wish.priority}</span>
+              <span className="wish-person">{wish.wish_type || '買いたい'}・{wish.wanted_by}</span>
+              <span className="wish-priority">{wish.consultation_status || '相談中'}・{wish.priority}</span>
             </div>
             <h3>{wish.title}</h3>
             <div className="wish-meta">
               {wish.price ? <strong>{formatYen(wish.price)}</strong> : <span>価格未定</span>}
               {wish.target_month && <span>{monthLabel(wish.target_month)}</span>}
+              {wish.candidate_date && <span>候補 {formatDate(wish.candidate_date)}</span>}
             </div>
             {wish.note && <p>{wish.note}</p>}
             {wish.url && (
               <a href={wish.url} target="_blank" rel="noreferrer">参考ページを開く ↗</a>
             )}
             <div className="wish-actions">
-              {!wish.is_completed && (
+              {!wish.is_completed && (wish.wish_type || '買いたい') === '買いたい' && (
                 <button type="button" disabled={!online || busy} onClick={() => onAddToShopping(wish)}>
                   買い物に追加
                 </button>
@@ -293,6 +342,31 @@ export function WishView({
                 削除
               </button>
             </div>
+            <details className="wish-discussion">
+              <summary>ふたりで相談 <b>{(commentsByWish[wish.id] || []).length}件</b></summary>
+              <div className="wish-comment-list">
+                {(commentsByWish[wish.id] || []).length === 0 && <p>まだコメントはありません。</p>}
+                {(commentsByWish[wish.id] || []).map((comment) => (
+                  <div className="wish-comment" key={comment.id}>
+                    <span>{comment.created_by === memberId ? 'あなた' : 'パートナー'}</span>
+                    <p>{comment.body}</p>
+                    {comment.created_by === memberId && (
+                      <button type="button" disabled={!online || busy} onClick={() => onDeleteComment(comment.id)}>削除</button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <form className="wish-comment-form" onSubmit={(event) => submitComment(event, wish.id)}>
+                <input
+                  type="text"
+                  maxLength="300"
+                  placeholder="候補日や予算についてコメント"
+                  value={commentDrafts[wish.id] || ''}
+                  onChange={(event) => setCommentDrafts({ ...commentDrafts, [wish.id]: event.target.value })}
+                />
+                <button type="submit" disabled={!online || busy}>送信</button>
+              </form>
+            </details>
           </article>
         ))}
       </div>
