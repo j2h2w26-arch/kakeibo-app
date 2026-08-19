@@ -1,10 +1,17 @@
 import { useMemo, useState } from 'react'
 import { formatDate, formatYen, parsePositiveYen } from '../lib/format'
+import { filterWishes, wishOwnerCounts } from '../lib/wishes'
 
 const PRIORITIES = ['いつか', 'ほしい', '最優先']
 const WANTED_BY = ['夫', '妻', 'ふたり']
 const WISH_TYPES = ['買いたい', '行きたい', 'やりたい']
 const CONSULTATION_STATUSES = ['相談中', '決定', '見送り']
+const OWNER_FILTERS = [
+  ['all', '全部'],
+  ['夫', '夫'],
+  ['妻', '妻'],
+  ['ふたり', 'ふたり'],
+]
 
 const EMPTY_WISH = () => ({
   title: '',
@@ -64,6 +71,7 @@ export function WishView({
   onDeleteComment,
 }) {
   const [filter, setFilter] = useState('open')
+  const [ownerFilter, setOwnerFilter] = useState('all')
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState(EMPTY_WISH)
@@ -77,11 +85,8 @@ export function WishView({
   }, {}), [comments])
 
   const openWishes = wishes.filter((wish) => !wish.is_completed)
-  const visibleWishes = wishes.filter((wish) => {
-    if (filter === 'open') return !wish.is_completed
-    if (filter === 'done') return wish.is_completed
-    return true
-  })
+  const visibleWishes = filterWishes(wishes, filter, ownerFilter)
+  const ownerCounts = wishOwnerCounts(wishes, filter)
 
   function resetForm() {
     setForm(EMPTY_WISH())
@@ -282,7 +287,25 @@ export function WishView({
         </form>
       )}
 
-      <div className="filter-row wish-filter" aria-label="Wishの絞り込み">
+      <div className="wish-filter-heading">
+        <strong>誰のWish？</strong>
+        <span>夫・妻・ふたりで切り替え</span>
+      </div>
+      <div className="filter-row wish-owner-filter" aria-label="Wishの所有者で絞り込み">
+        {OWNER_FILTERS.map(([value, label]) => (
+          <button
+            className={ownerFilter === value ? 'active' : ''}
+            type="button"
+            key={value}
+            onClick={() => setOwnerFilter(value)}
+            aria-pressed={ownerFilter === value}
+          >
+            {label}<small>{ownerCounts[value]}</small>
+          </button>
+        ))}
+      </div>
+
+      <div className="filter-row wish-filter" aria-label="Wishの進捗で絞り込み">
         {[
           ['open', 'これから'],
           ['all', 'すべて'],
@@ -293,6 +316,7 @@ export function WishView({
             type="button"
             key={value}
             onClick={() => setFilter(value)}
+            aria-pressed={filter === value}
           >
             {label}
           </button>
@@ -303,8 +327,8 @@ export function WishView({
         {visibleWishes.length === 0 && (
           <div className="empty-state">
             <span>♡</span>
-            <strong>{filter === 'done' ? '叶ったWishはまだありません' : '最初のWishを追加しよう'}</strong>
-            <p>ふたりで楽しみにできるものを残しておけます</p>
+            <strong>{filter === 'done' ? '該当する叶ったWishはありません' : '該当するWishはありません'}</strong>
+            <p>{ownerFilter === 'all' ? '最初のWishを追加してみよう' : `${ownerFilter}のWishを追加・編集できます`}</p>
           </div>
         )}
         {visibleWishes.map((wish) => (
