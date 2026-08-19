@@ -54,7 +54,9 @@ export function HomeView({
   const pendingWishes = wishes.filter((wish) => !wish.is_completed).length
   const openLoans = loanSummary.openLoanCount
   const completedPointActions = pointActivities.filter((activity) => (
-    activity.is_active && pointCompletions.some((completion) => (
+    activity.is_active
+    && (!activity.assigned_to || activity.assigned_to === member.user_id)
+    && pointCompletions.some((completion) => (
       completion.user_id === member.user_id
       && completion.activity_id === activity.id
       && completion.period_key === pointPeriodKey(activity.frequency)
@@ -115,7 +117,9 @@ export function HomeView({
               <strong>{module.title}</strong>
               <span>{module.description}</span>
             </span>
-            {module.id === 'points' && pointActivities.length > 0
+            {module.id === 'points' && pointActivities.some((activity) => (
+              activity.is_active && (!activity.assigned_to || activity.assigned_to === member.user_id)
+            ))
               ? <em>{completedPointActions} DONE</em>
               : <i aria-hidden="true">›</i>}
           </button>

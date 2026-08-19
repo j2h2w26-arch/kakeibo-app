@@ -22,6 +22,9 @@ import {
   updatePointActivity,
   updateWish,
   undoPointActivityCompletion,
+  setPointCampaignDecision,
+  setPointServicePreference,
+  syncPointCampaigns,
 } from './lib/data'
 import { messageFromError } from './lib/format'
 import { supabase } from './lib/supabase'
@@ -248,6 +251,13 @@ function App() {
       <PointActionsView
         activities={snapshot.pointActivities}
         completions={snapshot.pointCompletions}
+        sources={snapshot.pointSources}
+        campaigns={snapshot.pointCampaigns}
+        campaignSteps={snapshot.pointCampaignSteps}
+        campaignStates={snapshot.pointCampaignStates}
+        servicePreferences={snapshot.pointServicePreferences}
+        syncRuns={snapshot.pointSyncRuns}
+        campaignSchemaReady={snapshot.pointCampaignSchemaReady}
         member={member}
         online={online}
         busy={busy}
@@ -256,6 +266,15 @@ function App() {
         onDelete={(id) => runAction(() => removePointActivity(id), 'ポイ活項目を削除しました')}
         onComplete={(input) => runAction(() => completePointActivity(input), '完了にしました')}
         onUndo={(id) => runAction(() => undoPointActivityCompletion(id), '完了を取り消しました')}
+        onCampaignDecision={(id, decision) => runAction(
+          () => setPointCampaignDecision(id, decision),
+          decision === 'joined' ? 'Todoに追加しました' : '表示設定を保存しました',
+        )}
+        onServicePreference={(serviceKey, isEnabled) => runAction(
+          () => setPointServicePreference(member.user_id, serviceKey, isEnabled),
+          '表示サービスを更新しました',
+        )}
+        onSync={() => runAction(() => syncPointCampaigns(), '公式情報を更新しました')}
       />
     )
   } else {
