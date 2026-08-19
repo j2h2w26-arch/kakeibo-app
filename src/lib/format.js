@@ -15,6 +15,26 @@ export function todayInTokyo(now = new Date()) {
   return `${value.year}-${value.month}-${value.day}`
 }
 
+export function pointPeriodKey(frequency, now = new Date()) {
+  if (frequency === 'once') return 'once'
+
+  const date = todayInTokyo(now)
+  if (frequency === 'daily') return `daily:${date}`
+  if (frequency === 'monthly') return `monthly:${date.slice(0, 7)}`
+
+  if (frequency === 'weekly') {
+    const day = new Date(`${date}T00:00:00Z`)
+    const weekday = day.getUTCDay() || 7
+    day.setUTCDate(day.getUTCDate() + 4 - weekday)
+    const weekYear = day.getUTCFullYear()
+    const yearStart = new Date(Date.UTC(weekYear, 0, 1))
+    const week = Math.ceil((((day - yearStart) / 86400000) + 1) / 7)
+    return `weekly:${weekYear}-W${String(week).padStart(2, '0')}`
+  }
+
+  throw new Error('未対応のポイ活頻度です。')
+}
+
 export function formatYen(value) {
   return `¥${Number(value || 0).toLocaleString('ja-JP')}`
 }
@@ -30,6 +50,7 @@ export function calculateLoanSummary(loans, repaymentsByLoan) {
   let totalRepaid = 0
   let husbandLent = 0
   let wifeLent = 0
+  let openLoanCount = 0
 
   for (const loan of loans) {
     const paid = (repaymentsByLoan[loan.id] || []).reduce(
@@ -42,6 +63,7 @@ export function calculateLoanSummary(loans, repaymentsByLoan) {
 
     totalRepaid += paid
     totalOutstanding += outstanding
+    if (outstanding > 0) openLoanCount += 1
     if (loan.lender === '夫') husbandLent += outstanding
     if (loan.lender === '妻') wifeLent += outstanding
   }
@@ -50,6 +72,7 @@ export function calculateLoanSummary(loans, repaymentsByLoan) {
   return {
     totalOutstanding,
     totalRepaid,
+    openLoanCount,
     netAmount: Math.abs(net),
     netLabel: net > 0 ? '妻から夫へ' : net < 0 ? '夫から妻へ' : '精算なし',
   }

@@ -28,11 +28,11 @@ export function LoginScreen() {
   return (
     <main className="login-screen">
       <section className="login-card" aria-labelledby="login-title">
-        <div className="brand-mark" aria-hidden="true">¥</div>
-        <p className="eyebrow">OUR LITTLE WALLET</p>
-        <h1 id="login-title">ふたりのお財布</h1>
+        <div className="brand-mark" aria-hidden="true">⌂</div>
+        <p className="eyebrow">FUTARI HOME</p>
+        <h1 id="login-title">ふたりの暮らし</h1>
         <p className="login-copy">
-          貸し借りも、買い出しも。<br />ふたりの毎日をひとつの場所に。
+          お金も、買い物も、ふたりの楽しみも。<br />毎日のことをひとつの場所に。
         </p>
 
         <form className="login-form" onSubmit={handleSubmit}>
@@ -62,7 +62,7 @@ export function LoginScreen() {
             {busy ? '確認しています…' : 'ログイン'}
           </button>
         </form>
-        <p className="login-note">登録済みの夫婦アカウントだけが利用できます</p>
+        <p className="login-note">登録済みの家族アカウントだけが利用できます</p>
       </section>
     </main>
   )

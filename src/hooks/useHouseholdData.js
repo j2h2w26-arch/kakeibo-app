@@ -2,13 +2,27 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { fetchHouseholdSnapshot } from '../lib/data'
 
-const CACHE_KEY = 'futari-wallet-cache-v1'
-const EMPTY_SNAPSHOT = { loans: [], repayments: {}, items: [] }
+const CACHE_KEY = 'futari-home-cache-v4'
+const EMPTY_SNAPSHOT = {
+  loans: [],
+  repayments: {},
+  items: [],
+  wishes: [],
+  pointActivities: [],
+  pointCompletions: [],
+  pointSources: [],
+  pointCampaigns: [],
+  pointCampaignSteps: [],
+  pointCampaignStates: [],
+  pointServicePreferences: [],
+  pointSyncRuns: [],
+  pointCampaignSchemaReady: false,
+}
 
 function readCache() {
   try {
     const cached = JSON.parse(localStorage.getItem(CACHE_KEY))
-    return cached?.snapshot || EMPTY_SNAPSHOT
+    return { ...EMPTY_SNAPSHOT, ...(cached?.snapshot || {}) }
   } catch {
     return EMPTY_SNAPSHOT
   }
@@ -51,18 +65,35 @@ export function useHouseholdData(enabled) {
       timerRef.current = window.setTimeout(() => refresh({ quiet: true }), 250)
     }
 
-    const channel = supabase
-      .channel('futari-wallet-live')
+    let channel = supabase
+      .channel('futari-home-live')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'loans' }, queueRefresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'repayments' }, queueRefresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'shopping_items' }, queueRefresh)
-      .subscribe()
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'wishes' }, queueRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'point_activities' }, queueRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'point_activity_completions' }, queueRefresh)
+
+    if (snapshot.pointCampaignSchemaReady) {
+      for (const table of [
+        'point_sources',
+        'point_campaigns',
+        'point_campaign_steps',
+        'point_campaign_member_states',
+        'point_service_preferences',
+        'point_sync_runs',
+      ]) {
+        channel = channel.on('postgres_changes', { event: '*', schema: 'public', table }, queueRefresh)
+      }
+    }
+
+    channel.subscribe()
 
     return () => {
       window.clearTimeout(timerRef.current)
       supabase.removeChannel(channel)
     }
-  }, [enabled, refresh])
+  }, [enabled, refresh, snapshot.pointCampaignSchemaReady])
 
   return { snapshot, loading, syncState, error, refresh }
 }

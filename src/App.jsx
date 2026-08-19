@@ -1,22 +1,44 @@
 import { useCallback, useEffect, useState } from 'react'
+import { HomeView } from './components/HomeView'
 import { LoanView } from './components/LoanView'
 import { LoginScreen } from './components/LoginScreen'
 import { ShoppingView } from './components/ShoppingView'
+import { WishView } from './components/WishView'
+import { PointActionsView } from './components/PointActionsView'
 import { useHouseholdData } from './hooks/useHouseholdData'
 import {
   cancelRepayment,
+  completePointActivity,
+  createPointActivity,
   createLoan,
   createShoppingItem,
+  createWish,
   recordRepayment,
   removeLoan,
+  removePointActivity,
   removeShoppingItem,
+  removeWish,
   updateShoppingItem,
+  updatePointActivity,
+  updateWish,
+  undoPointActivityCompletion,
+  setPointCampaignDecision,
+  setPointServicePreference,
+  syncPointCampaigns,
 } from './lib/data'
 import { messageFromError } from './lib/format'
 import { supabase } from './lib/supabase'
 import './App.css'
 
 const MEMBER_CACHE_KEY = 'futari-wallet-member-v1'
+
+const NAV_ITEMS = [
+  { id: 'home', icon: '⌂', label: 'ホーム' },
+  { id: 'money', icon: '¥', label: 'お金' },
+  { id: 'shopping', icon: '✓', label: '買い物' },
+  { id: 'wishes', icon: '♡', label: 'Wish' },
+  { id: 'points', icon: '★', label: 'ポイ活' },
+]
 
 function readCachedMember(userId) {
   try {
@@ -43,7 +65,7 @@ function App() {
   const [member, setMember] = useState(null)
   const [memberLoading, setMemberLoading] = useState(false)
   const [accessError, setAccessError] = useState('')
-  const [tab, setTab] = useState('loans')
+  const [tab, setTab] = useState('home')
   const [online, setOnline] = useState(() => navigator.onLine)
   const [busy, setBusy] = useState(false)
   const [toast, setToast] = useState(null)
@@ -162,12 +184,109 @@ function App() {
 
   if (!member) return <LoadingScreen />
 
+  const showInitialLoader = loading && snapshot.loans.length === 0 && snapshot.items.length === 0
+
+  let currentView
+  if (showInitialLoader) {
+    currentView = <LoadingScreen message="ふたりのデータを同期しています…" />
+  } else if (tab === 'home') {
+    currentView = (
+      <HomeView
+        member={member}
+        loans={snapshot.loans}
+        repayments={snapshot.repayments}
+        items={snapshot.items}
+        wishes={snapshot.wishes}
+        pointActivities={snapshot.pointActivities}
+        pointCompletions={snapshot.pointCompletions}
+        onNavigate={setTab}
+      />
+    )
+  } else if (tab === 'money') {
+    currentView = (
+      <LoanView
+        loans={snapshot.loans}
+        repayments={snapshot.repayments}
+        online={online}
+        busy={busy}
+        onCreate={(input) => runAction(() => createLoan(input), '貸し借りを登録しました')}
+        onDelete={(id) => runAction(() => removeLoan(id), '貸し借りを削除しました')}
+        onRepay={(input) => runAction(() => recordRepayment(input), '返済を記録しました')}
+        onCancelRepayment={(id) => runAction(() => cancelRepayment(id), '返済を取り消しました')}
+      />
+    )
+  } else if (tab === 'shopping') {
+    currentView = (
+      <ShoppingView
+        items={snapshot.items}
+        online={online}
+        busy={busy}
+        onCreate={(input) => runAction(() => createShoppingItem(input), '買い出しに追加しました')}
+        onUpdate={(id, input) => runAction(() => updateShoppingItem(id, input), '買い出しを更新しました')}
+        onDelete={(id) => runAction(() => removeShoppingItem(id), '買い出しから削除しました')}
+      />
+    )
+  } else if (tab === 'wishes') {
+    currentView = (
+      <WishView
+        wishes={snapshot.wishes}
+        online={online}
+        busy={busy}
+        onCreate={(input) => runAction(() => createWish(input), 'Wishを追加しました')}
+        onUpdate={(id, input) => runAction(() => updateWish(id, input), 'Wishを更新しました')}
+        onDelete={(id) => runAction(() => removeWish(id), 'Wishを削除しました')}
+        onAddToShopping={(wish) => runAction(
+          () => createShoppingItem({
+            name: wish.title,
+            category: 'その他',
+            is_purchased: false,
+            purchased_at: null,
+          }),
+          '買い物リストに追加しました',
+        )}
+      />
+    )
+  } else if (tab === 'points') {
+    currentView = (
+      <PointActionsView
+        activities={snapshot.pointActivities}
+        completions={snapshot.pointCompletions}
+        sources={snapshot.pointSources}
+        campaigns={snapshot.pointCampaigns}
+        campaignSteps={snapshot.pointCampaignSteps}
+        campaignStates={snapshot.pointCampaignStates}
+        servicePreferences={snapshot.pointServicePreferences}
+        syncRuns={snapshot.pointSyncRuns}
+        campaignSchemaReady={snapshot.pointCampaignSchemaReady}
+        member={member}
+        online={online}
+        busy={busy}
+        onCreate={(input) => runAction(() => createPointActivity(input), 'ポイ活項目を追加しました')}
+        onUpdate={(id, input) => runAction(() => updatePointActivity(id, input), 'ポイ活項目を更新しました')}
+        onDelete={(id) => runAction(() => removePointActivity(id), 'ポイ活項目を削除しました')}
+        onComplete={(input) => runAction(() => completePointActivity(input), '完了にしました')}
+        onUndo={(id) => runAction(() => undoPointActivityCompletion(id), '完了を取り消しました')}
+        onCampaignDecision={(id, decision) => runAction(
+          () => setPointCampaignDecision(id, decision),
+          decision === 'joined' ? 'Todoに追加しました' : '表示設定を保存しました',
+        )}
+        onServicePreference={(serviceKey, isEnabled) => runAction(
+          () => setPointServicePreference(member.user_id, serviceKey, isEnabled),
+          '表示サービスを更新しました',
+        )}
+        onSync={() => runAction(() => syncPointCampaigns(), '公式情報を更新しました')}
+      />
+    )
+  } else {
+    currentView = null
+  }
+
   return (
     <div className="app-shell">
       <header className="app-header">
         <div>
-          <p className="eyebrow">FUTARI WALLET</p>
-          <h1>ふたりのお財布</h1>
+          <p className="eyebrow">FUTARI HOME</p>
+          <h1>ふたりの暮らし</h1>
         </div>
         <div className="header-actions">
           <span className={`sync-indicator ${syncState}`} title="同期状態">
@@ -187,41 +306,21 @@ function App() {
         </div>
       )}
 
-      <main className="app-content">
-        {loading && snapshot.loans.length === 0 && snapshot.items.length === 0 ? (
-          <LoadingScreen message="ふたりのデータを同期しています…" />
-        ) : tab === 'loans' ? (
-          <LoanView
-            loans={snapshot.loans}
-            repayments={snapshot.repayments}
-            online={online}
-            busy={busy}
-            onCreate={(input) => runAction(() => createLoan(input), '貸し借りを登録しました')}
-            onDelete={(id) => runAction(() => removeLoan(id), '貸し借りを削除しました')}
-            onRepay={(input) => runAction(() => recordRepayment(input), '返済を記録しました')}
-            onCancelRepayment={(id) => runAction(() => cancelRepayment(id), '返済を取り消しました')}
-          />
-        ) : (
-          <ShoppingView
-            items={snapshot.items}
-            online={online}
-            busy={busy}
-            onCreate={(input) => runAction(() => createShoppingItem(input), '買い出しに追加しました')}
-            onUpdate={(id, input) => runAction(() => updateShoppingItem(id, input), '買い出しを更新しました')}
-            onDelete={(id) => runAction(() => removeShoppingItem(id), '買い出しから削除しました')}
-          />
-        )}
-      </main>
+      <main className="app-content">{currentView}</main>
 
       <nav className="bottom-nav" aria-label="メインメニュー">
-        <button className={tab === 'loans' ? 'active' : ''} type="button" onClick={() => setTab('loans')}>
-          <span aria-hidden="true">↔</span>
-          <b>貸し借り</b>
-        </button>
-        <button className={tab === 'shopping' ? 'active' : ''} type="button" onClick={() => setTab('shopping')}>
-          <span aria-hidden="true">✓</span>
-          <b>買い出し</b>
-        </button>
+        {NAV_ITEMS.map((item) => (
+          <button
+            className={tab === item.id ? 'active' : ''}
+            type="button"
+            key={item.id}
+            onClick={() => setTab(item.id)}
+            aria-current={tab === item.id ? 'page' : undefined}
+          >
+            <span aria-hidden="true">{item.icon}</span>
+            <b>{item.label}</b>
+          </button>
+        ))}
       </nav>
 
       {toast && <div className={`toast ${toast.type}`} role="status">{toast.message}</div>}
