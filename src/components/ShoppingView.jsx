@@ -1,9 +1,12 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { todayInTokyo } from '../lib/format'
+import { parseShoppingItems } from '../lib/shopping'
 
 const CATEGORIES = ['食材', '日用品', 'その他']
+const MAX_BULK_ITEMS = 20
+const MAX_ITEM_LENGTH = 80
 
-export function ShoppingView({ items, online, busy, onCreate, onUpdate, onDelete }) {
+export function ShoppingView({ items, online, busy, onCreateMany, onUpdate, onDelete }) {
   const [name, setName] = useState('')
   const [category, setCategory] = useState('食材')
   const [editing, setEditing] = useState(null)
@@ -11,19 +14,28 @@ export function ShoppingView({ items, online, busy, onCreate, onUpdate, onDelete
 
   const pending = items.filter((item) => !item.is_purchased)
   const purchased = items.filter((item) => item.is_purchased)
+  const parsedItems = useMemo(() => parseShoppingItems(name), [name])
 
   async function submitItem(event) {
     event.preventDefault()
-    if (!name.trim()) {
+    if (parsedItems.length === 0) {
       setError('商品名を入力してください。')
       return
     }
-    const success = await onCreate({
-      name: name.trim(),
+    if (parsedItems.length > MAX_BULK_ITEMS) {
+      setError(`一度に追加できるのは${MAX_BULK_ITEMS}件までです。`)
+      return
+    }
+    if (parsedItems.some((item) => item.length > MAX_ITEM_LENGTH)) {
+      setError(`商品名は1件につき${MAX_ITEM_LENGTH}文字以内にしてください。`)
+      return
+    }
+    const success = await onCreateMany(parsedItems.map((item) => ({
+      name: item,
       category,
       is_purchased: false,
       purchased_at: null,
-    })
+    })))
     if (success) {
       setName('')
       setError('')
@@ -69,14 +81,30 @@ export function ShoppingView({ items, online, busy, onCreate, onUpdate, onDelete
         <div className="quick-add-main">
           <input
             type="text"
-            maxLength="80"
-            placeholder="買うものを追加"
+            maxLength="500"
+            placeholder="例：卵と鯖と豆腐とネギ"
             value={name}
-            onChange={(event) => setName(event.target.value)}
-            aria-label="商品名"
+            onChange={(event) => {
+              setName(event.target.value)
+              setError('')
+            }}
+            aria-label="買うものをまとめて入力"
           />
-          <button type="submit" disabled={!online || busy} aria-label="追加">＋</button>
+          <button
+            className={parsedItems.length > 1 ? 'bulk-add-button' : ''}
+            type="submit"
+            disabled={!online || busy}
+            aria-label={`${parsedItems.length || 1}件追加`}
+          >
+            {parsedItems.length > 1 ? `${parsedItems.length}件` : '＋'}
+          </button>
         </div>
+        <p className="bulk-add-hint">「と」・読点・カンマ・改行で、まとめて追加できます</p>
+        {parsedItems.length > 1 && (
+          <div className="bulk-add-preview" aria-label="追加される項目">
+            {parsedItems.map((item) => <span key={item}>{item}</span>)}
+          </div>
+        )}
         <div className="category-row" aria-label="カテゴリ">
           {CATEGORIES.map((value) => (
             <button
