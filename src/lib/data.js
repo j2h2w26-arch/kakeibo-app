@@ -7,18 +7,36 @@ function unwrap(result) {
 }
 
 export async function fetchHouseholdSnapshot() {
-  const [loansResult, repaymentsResult, itemsResult, wishesResult] = await Promise.all([
+  const [
+    loansResult,
+    repaymentsResult,
+    itemsResult,
+    wishesResult,
+    pointActivitiesResult,
+    pointCompletionsResult,
+  ] = await Promise.all([
     supabase.from('loans').select('*').order('date', { ascending: false }),
     supabase.from('repayments').select('*').order('date', { ascending: false }),
     supabase.from('shopping_items').select('*').order('created_at', { ascending: false }),
     supabase.from('wishes').select('*').order('created_at', { ascending: false }),
+    supabase.from('point_activities').select('*').order('sort_order').order('created_at'),
+    supabase.from('point_activity_completions').select('*').order('completed_at', { ascending: false }),
   ])
 
   const loans = unwrap(loansResult) || []
   const repayments = unwrap(repaymentsResult) || []
   const items = unwrap(itemsResult) || []
   const wishes = unwrap(wishesResult) || []
-  return { loans, repayments: mapRepayments(repayments), items, wishes }
+  const pointActivities = unwrap(pointActivitiesResult) || []
+  const pointCompletions = unwrap(pointCompletionsResult) || []
+  return {
+    loans,
+    repayments: mapRepayments(repayments),
+    items,
+    wishes,
+    pointActivities,
+    pointCompletions,
+  }
 }
 
 export async function createLoan(input) {
@@ -66,4 +84,24 @@ export async function updateWish(id, input) {
 
 export async function removeWish(id) {
   unwrap(await supabase.from('wishes').delete().eq('id', id))
+}
+
+export async function createPointActivity(input) {
+  unwrap(await supabase.from('point_activities').insert([input]))
+}
+
+export async function updatePointActivity(id, input) {
+  unwrap(await supabase.from('point_activities').update(input).eq('id', id))
+}
+
+export async function removePointActivity(id) {
+  unwrap(await supabase.from('point_activities').delete().eq('id', id))
+}
+
+export async function completePointActivity(input) {
+  unwrap(await supabase.from('point_activity_completions').insert([input]))
+}
+
+export async function undoPointActivityCompletion(id) {
+  unwrap(await supabase.from('point_activity_completions').delete().eq('id', id))
 }

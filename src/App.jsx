@@ -1,22 +1,27 @@
 import { useCallback, useEffect, useState } from 'react'
-import { FeaturePreview } from './components/FeaturePreview'
 import { HomeView } from './components/HomeView'
 import { LoanView } from './components/LoanView'
 import { LoginScreen } from './components/LoginScreen'
 import { ShoppingView } from './components/ShoppingView'
 import { WishView } from './components/WishView'
+import { PointActionsView } from './components/PointActionsView'
 import { useHouseholdData } from './hooks/useHouseholdData'
 import {
   cancelRepayment,
+  completePointActivity,
+  createPointActivity,
   createLoan,
   createShoppingItem,
   createWish,
   recordRepayment,
   removeLoan,
+  removePointActivity,
   removeShoppingItem,
   removeWish,
   updateShoppingItem,
+  updatePointActivity,
   updateWish,
+  undoPointActivityCompletion,
 } from './lib/data'
 import { messageFromError } from './lib/format'
 import { supabase } from './lib/supabase'
@@ -189,6 +194,8 @@ function App() {
         repayments={snapshot.repayments}
         items={snapshot.items}
         wishes={snapshot.wishes}
+        pointActivities={snapshot.pointActivities}
+        pointCompletions={snapshot.pointCompletions}
         onNavigate={setTab}
       />
     )
@@ -236,8 +243,23 @@ function App() {
         )}
       />
     )
+  } else if (tab === 'points') {
+    currentView = (
+      <PointActionsView
+        activities={snapshot.pointActivities}
+        completions={snapshot.pointCompletions}
+        member={member}
+        online={online}
+        busy={busy}
+        onCreate={(input) => runAction(() => createPointActivity(input), 'ポイ活項目を追加しました')}
+        onUpdate={(id, input) => runAction(() => updatePointActivity(id, input), 'ポイ活項目を更新しました')}
+        onDelete={(id) => runAction(() => removePointActivity(id), 'ポイ活項目を削除しました')}
+        onComplete={(input) => runAction(() => completePointActivity(input), '完了にしました')}
+        onUndo={(id) => runAction(() => undoPointActivityCompletion(id), '完了を取り消しました')}
+      />
+    )
   } else {
-    currentView = <FeaturePreview feature={tab} onBack={() => setTab('home')} />
+    currentView = null
   }
 
   return (

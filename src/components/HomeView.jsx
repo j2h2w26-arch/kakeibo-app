@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { calculateLoanSummary, formatYen } from '../lib/format'
+import { calculateLoanSummary, formatYen, pointPeriodKey } from '../lib/format'
 
 const MODULES = [
   {
@@ -33,11 +33,19 @@ const MODULES = [
     title: '今日のポイ活',
     description: '散らばる獲得先をひとまとめ',
     tone: 'amber',
-    upcoming: true,
   },
 ]
 
-export function HomeView({ member, loans, repayments, items, wishes, onNavigate }) {
+export function HomeView({
+  member,
+  loans,
+  repayments,
+  items,
+  wishes,
+  pointActivities,
+  pointCompletions,
+  onNavigate,
+}) {
   const loanSummary = useMemo(
     () => calculateLoanSummary(loans, repayments),
     [loans, repayments],
@@ -45,6 +53,13 @@ export function HomeView({ member, loans, repayments, items, wishes, onNavigate 
   const pendingItems = items.filter((item) => !item.is_purchased).length
   const pendingWishes = wishes.filter((wish) => !wish.is_completed).length
   const openLoans = loanSummary.openLoanCount
+  const completedPointActions = pointActivities.filter((activity) => (
+    activity.is_active && pointCompletions.some((completion) => (
+      completion.user_id === member.user_id
+      && completion.activity_id === activity.id
+      && completion.period_key === pointPeriodKey(activity.frequency)
+    ))
+  )).length
 
   return (
     <section className="view home-view" aria-labelledby="home-title">
@@ -100,7 +115,9 @@ export function HomeView({ member, loans, repayments, items, wishes, onNavigate 
               <strong>{module.title}</strong>
               <span>{module.description}</span>
             </span>
-            {module.upcoming ? <em>COMING</em> : <i aria-hidden="true">›</i>}
+            {module.id === 'points' && pointActivities.length > 0
+              ? <em>{completedPointActions} DONE</em>
+              : <i aria-hidden="true">›</i>}
           </button>
         ))}
       </div>
