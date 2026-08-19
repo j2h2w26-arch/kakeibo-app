@@ -105,6 +105,10 @@ export async function createShoppingItem(input) {
   unwrap(await supabase.from('shopping_items').insert([input]))
 }
 
+export async function createShoppingItems(inputs) {
+  unwrap(await supabase.from('shopping_items').insert(inputs))
+}
+
 export async function updateShoppingItem(id, input) {
   unwrap(await supabase.from('shopping_items').update(input).eq('id', id))
 }

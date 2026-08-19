@@ -12,6 +12,7 @@ import {
   createPointActivity,
   createLoan,
   createShoppingItem,
+  createShoppingItems,
   createWish,
   recordRepayment,
   removeLoan,
@@ -221,7 +222,10 @@ function App() {
         items={snapshot.items}
         online={online}
         busy={busy}
-        onCreate={(input) => runAction(() => createShoppingItem(input), '買い出しに追加しました')}
+        onCreateMany={(inputs) => runAction(
+          () => createShoppingItems(inputs),
+          `${inputs.length}件を買い出しに追加しました`,
+        )}
         onUpdate={(id, input) => runAction(() => updateShoppingItem(id, input), '買い出しを更新しました')}
         onDelete={(id) => runAction(() => removeShoppingItem(id), '買い出しから削除しました')}
       />
