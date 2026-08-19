@@ -174,13 +174,6 @@ grant select, insert, update, delete on table
   public.point_campaign_member_states,
   public.point_service_preferences
 to authenticated;
-grant usage, select on sequence
-  public.point_sources_id_seq,
-  public.point_campaigns_id_seq,
-  public.point_campaign_steps_id_seq,
-  public.point_sync_runs_id_seq
-to authenticated;
-
 alter table public.point_sources enable row level security;
 alter table public.point_campaigns enable row level security;
 alter table public.point_campaign_steps enable row level security;
@@ -239,7 +232,24 @@ create policy "Household members create point activities"
   on public.point_activities for insert to authenticated
   with check (
     (select public.is_app_member())
-    and (assigned_to is null or assigned_to = (select auth.uid()))
+    and (
+      (origin = 'manual' and assigned_to is null)
+      or (
+        origin = 'campaign'
+        and assigned_to = (select auth.uid())
+        and exists (
+          select 1 from public.point_campaign_member_states as states
+          where states.campaign_id = point_activities.campaign_id
+            and states.user_id = (select auth.uid())
+            and states.decision = 'joined'
+        )
+        and exists (
+          select 1 from public.point_campaign_steps as steps
+          where steps.campaign_id = point_activities.campaign_id
+            and steps.step_key = point_activities.step_key
+        )
+      )
+    )
   );
 create policy "Members update permitted point activities"
   on public.point_activities for update to authenticated
@@ -249,8 +259,24 @@ create policy "Members update permitted point activities"
   )
   with check (
     (select public.is_app_member())
-    and (origin = 'manual' or assigned_to = (select auth.uid()))
-    and (assigned_to is null or assigned_to = (select auth.uid()))
+    and (
+      (origin = 'manual' and assigned_to is null)
+      or (
+        origin = 'campaign'
+        and assigned_to = (select auth.uid())
+        and exists (
+          select 1 from public.point_campaign_member_states as states
+          where states.campaign_id = point_activities.campaign_id
+            and states.user_id = (select auth.uid())
+            and states.decision = 'joined'
+        )
+        and exists (
+          select 1 from public.point_campaign_steps as steps
+          where steps.campaign_id = point_activities.campaign_id
+            and steps.step_key = point_activities.step_key
+        )
+      )
+    )
   );
 create policy "Members delete permitted point activities"
   on public.point_activities for delete to authenticated

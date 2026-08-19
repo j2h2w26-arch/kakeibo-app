@@ -3,7 +3,30 @@ import { createClient } from '@supabase/supabase-js'
 
 const MAX_CAMPAIGNS_PER_SOURCE = 20
 const FETCH_TIMEOUT_MS = 12000
-const OFFICIAL_HOSTS = new Set(['point.rakuten.co.jp', 'pay.rakuten.co.jp'])
+const OFFICIAL_CAMPAIGN_HOSTS = new Set([
+  'books.rakuten.co.jp',
+  'carshare.rakuten.co.jp',
+  'channel.rakuten.co.jp',
+  'common-service.payment.rakuten.co.jp',
+  'dining.rakuten.co.jp',
+  'energy.rakuten.co.jp',
+  'event.rakuten.co.jp',
+  'keiba.rakuten.co.jp',
+  'magazine.rakuten.co.jp',
+  'member.insight.rakuten.co.jp',
+  'pay.rakuten.co.jp',
+  'point.rakuten.co.jp',
+  'pointcard.rakuten.co.jp',
+  'pointmall.rakuten.co.jp',
+  'rakuma.rakuten.co.jp',
+  'screen.rakuten.co.jp',
+  'sm.rakuten.co.jp',
+  'toto.rakuten.co.jp',
+  'travel.rakuten.co.jp',
+  'www.rakuten-bank.co.jp',
+  'www.rakuten-card.co.jp',
+  'www.rebates.jp',
+])
 
 type PointSource = {
   id: number
@@ -11,7 +34,17 @@ type PointSource = {
   name: string
   service_key: 'pointclub' | 'pay'
   index_url: string
+  feed_url: string | null
   official_host: string
+}
+
+type CampaignSeed = {
+  canonicalUrl: string
+  title?: string
+  entryRequired?: boolean | null
+  startsAt?: string | null
+  endsAt?: string | null
+  metadata: Record<string, unknown>
 }
 
 type CampaignAnalysis = {
@@ -36,7 +69,7 @@ type CampaignStep = {
   step_order: number
   title: string
   action_type: 'tap' | 'entry' | 'condition' | 'check'
-  frequency: 'once'
+  frequency: 'daily' | 'once'
   estimated_minutes: number
   instructions: string | null
 }
@@ -87,31 +120,105 @@ function metaTitle(html: string) {
   return ''
 }
 
-function canonicalCampaignLinks(html: string, source: PointSource) {
-  const urls = new Set<string>()
-  const hrefPattern = /href\s*=\s*["']([^"']+)["']/gi
-  let match: RegExpExecArray | null
-  while ((match = hrefPattern.exec(html)) && urls.size < MAX_CAMPAIGNS_PER_SOURCE) {
-    try {
-      const url = new URL(decodeEntities(match[1]), source.index_url)
-      url.hash = ''
-      url.search = ''
-      const isCampaignPath = url.pathname.startsWith('/campaign/') && url.pathname !== '/campaign/'
-      const excludedPath = /\/(?:faq|terms|agreement|guidance|rule|history)(?:\/|$)/i.test(url.pathname)
-      if (
-        url.protocol === 'https:'
-        && url.hostname === source.official_host
-        && OFFICIAL_HOSTS.has(url.hostname)
-        && isCampaignPath
-        && !excludedPath
-      ) {
-        urls.add(url.toString())
-      }
-    } catch {
-      // Ignore malformed links from third-party page content.
-    }
+function canonicalOfficialUrl(value: unknown) {
+  if (typeof value !== 'string') return null
+  try {
+    const url = new URL(value)
+    url.hash = ''
+    url.search = ''
+    if (url.protocol !== 'https:' || !OFFICIAL_CAMPAIGN_HOSTS.has(url.hostname)) return null
+    return url.toString()
+  } catch {
+    return null
   }
-  return [...urls]
+}
+
+function feedIso(value: unknown, assumeTokyo = false) {
+  if (typeof value !== 'string' || !value.trim()) return null
+  const normalized = assumeTokyo && !/(?:Z|[+-]\d\d:\d\d)$/.test(value)
+    ? `${value}+09:00`
+    : value
+  const parsed = new Date(normalized)
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString()
+}
+
+function activeNow(startsAt: string | null, endsAt: string | null) {
+  const now = Date.now()
+  return (!startsAt || new Date(startsAt).getTime() <= now)
+    && (!endsAt || new Date(endsAt).getTime() >= now)
+}
+
+function entryRequirement(value: unknown) {
+  if (value === 'required') return true
+  if (value === 'notRequired') return false
+  return null
+}
+
+function pointClubSeeds(payload: unknown): CampaignSeed[] {
+  const banners = payload && typeof payload === 'object' && Array.isArray((payload as { banners?: unknown[] }).banners)
+    ? (payload as { banners: Array<Record<string, unknown>> }).banners
+    : []
+  const unique = new Map<string, CampaignSeed>()
+  for (const banner of banners) {
+    if (banner.is_active !== true) continue
+    const dates = banner.cpn_date && typeof banner.cpn_date === 'object'
+      ? banner.cpn_date as Record<string, unknown>
+      : {}
+    const startsAt = feedIso(dates.start, true)
+    const endsAt = feedIso(dates.end, true)
+    if (!activeNow(startsAt, endsAt)) continue
+    const canonicalUrl = canonicalOfficialUrl(banner.link_url)
+    if (!canonicalUrl || unique.has(canonicalUrl)) continue
+    unique.set(canonicalUrl, {
+      canonicalUrl,
+      startsAt,
+      endsAt,
+      metadata: {
+        feed_id: banner.id,
+        feed_conditions: banner.conditions ?? null,
+        feed_image_url: banner.image_url ?? null,
+      },
+    })
+    if (unique.size >= MAX_CAMPAIGNS_PER_SOURCE) break
+  }
+  return [...unique.values()]
+}
+
+function paySeeds(payload: unknown): CampaignSeed[] {
+  const campaigns = payload && typeof payload === 'object' && Array.isArray((payload as { campaigns?: unknown[] }).campaigns)
+    ? (payload as { campaigns: Array<Record<string, unknown>> }).campaigns
+    : []
+  const unique = new Map<string, CampaignSeed>()
+  for (const campaign of campaigns) {
+    if (campaign.showForGuest === false) continue
+    const services = Array.isArray(campaign.services) ? campaign.services : []
+    if (!services.includes('pay')) continue
+    const startsAt = feedIso(campaign.startDate)
+    const endsAt = feedIso(campaign.endDate)
+    if (!activeNow(startsAt, endsAt)) continue
+    const canonicalUrl = canonicalOfficialUrl(campaign.link)
+    if (!canonicalUrl || unique.has(canonicalUrl)) continue
+    const title = typeof campaign.title === 'string' ? clip(campaign.title, 180) : ''
+    if (!title) continue
+    unique.set(canonicalUrl, {
+      canonicalUrl,
+      title,
+      entryRequired: entryRequirement(campaign.entryRequired),
+      startsAt,
+      endsAt,
+      metadata: {
+        feed_id: campaign.id,
+        manage_id: campaign.manageId,
+        services,
+        entry_requirement: campaign.entryRequired ?? null,
+        external_entry: campaign.externalEntry ?? null,
+        monthly_event: campaign.monthlyEvent ?? null,
+        feed_image_url: campaign.image ?? null,
+      },
+    })
+    if (unique.size >= MAX_CAMPAIGNS_PER_SOURCE) break
+  }
+  return [...unique.values()]
 }
 
 async function fetchHtml(url: string) {
@@ -129,10 +236,57 @@ async function fetchHtml(url: string) {
     if (!response.ok) throw new Error(`HTTP ${response.status}`)
     const contentType = response.headers.get('content-type') || ''
     if (!contentType.includes('text/html')) throw new Error(`unexpected content type: ${contentType}`)
-    return await response.text()
+    const bytes = new Uint8Array(await response.arrayBuffer())
+    const headerCharset = contentType.match(/charset\s*=\s*["']?([^;"'\s]+)/i)?.[1]
+    const asciiHead = String.fromCharCode(...bytes.slice(0, 4096))
+    const metaCharset = asciiHead.match(/<meta[^>]+charset\s*=\s*["']?([^"'\s/>]+)/i)?.[1]
+      || asciiHead.match(/<meta[^>]+content=["'][^"']*charset=([^;"'\s]+)/i)?.[1]
+    const declaredCharset = (headerCharset || metaCharset || 'utf-8').toLowerCase()
+    const charset = /(?:shift[-_]?jis|sjis|windows-31j|cp932)/.test(declaredCharset)
+      ? 'shift_jis'
+      : /euc[-_]?jp/.test(declaredCharset) ? 'euc-jp' : 'utf-8'
+    try {
+      return new TextDecoder(charset).decode(bytes)
+    } catch {
+      return new TextDecoder().decode(bytes)
+    }
   } finally {
     clearTimeout(timeout)
   }
+}
+
+async function fetchJson(url: string) {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
+  try {
+    const response = await fetch(url, {
+      signal: controller.signal,
+      redirect: 'follow',
+      headers: {
+        accept: 'application/json',
+        'user-agent': 'FutariHome/1.0 personal-household-campaign-checker',
+      },
+    })
+    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    const contentType = response.headers.get('content-type') || ''
+    if (!contentType.includes('application/json')) throw new Error(`unexpected content type: ${contentType}`)
+    return await response.json()
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
+async function discoverCampaignSeeds(source: PointSource) {
+  if (!source.feed_url) throw new Error('公式フィードURLが未設定です')
+  const feedHost = new URL(source.feed_url).hostname
+  const expectedFeedHosts = source.service_key === 'pointclub'
+    ? new Set(['point.rakuten.co.jp'])
+    : new Set(['common-service.payment.rakuten.co.jp'])
+  if (!expectedFeedHosts.has(feedHost)) throw new Error(`許可されていないフィードホストです: ${feedHost}`)
+  const payload = await fetchJson(source.feed_url)
+  const seeds = source.service_key === 'pointclub' ? pointClubSeeds(payload) : paySeeds(payload)
+  if (seeds.length === 0) throw new Error('開催中の公式キャンペーンを取得できませんでした')
+  return seeds
 }
 
 function toTokyoIso(year: number, month: number, day: number, hour: number, minute: number) {
@@ -177,23 +331,27 @@ async function sha256(value: string) {
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
-async function analyzeCampaign(html: string): Promise<CampaignAnalysis> {
+async function analyzeCampaign(html: string, seed: CampaignSeed): Promise<CampaignAnalysis> {
   const text = htmlToText(html)
-  const title = metaTitle(html)
-  const { startsAt, endsAt } = campaignDates(text)
+  const title = seed.title || metaTitle(html)
+  const parsedDates = campaignDates(text)
+  const startsAt = seed.startsAt || parsedDates.startsAt
+  const endsAt = seed.endsAt || parsedDates.endsAt
   const endedInCopy = /(?:キャンペーン|本キャンペーン)(?:は|が)?終了しました/.test(text)
   const endedByDate = endsAt ? new Date(endsAt).getTime() < Date.now() : false
-  const entryRequired = /エントリー\s*(?:：|:)?\s*(?:必要|必須)/.test(text)
+  const parsedEntryRequired = /エントリー\s*(?:：|:)?\s*(?:必要|必須)/.test(text)
     ? true
     : /エントリー\s*(?:：|:)?\s*不要/.test(text) ? false : null
-  const spendRequired = /(?:購入|お買い物|支払|決済|チャージ|契約|申込|カード発行|口座開設)/.test(text)
-  const lotteryOnly = /(?:抽選|くじ|ルーレット|山分け)/.test(text)
+  const entryRequired = seed.entryRequired === undefined ? parsedEntryRequired : seed.entryRequired
+  const lotteryOnly = /(?:抽選|くじ|ルーレット|山分け|当たる|ジャンケン|スクラッチ)/.test(text)
+  const spendRequired = /(?:購入|お買い物|支払|決済|チャージ|契約|申込|カード発行|口座開設|対象店舗)/.test(text)
+    || (!lotteryOnly && /(?:\d+(?:\.\d+)?[%％]還元|ポイント\s*\d+倍|全額還元)/.test(text))
   const generallyEligible = /楽天会員なら(?:だれ|誰|どなた)でも|(?:だれ|誰|どなた)でも参加/.test(text)
-  const restricted = /(?:初めて|はじめて|久しぶり|対象店舗|対象地域|対象者限定|会員限定|県内|市内)/.test(text)
+  const restricted = /(?:初めて|はじめて|久しぶり|対象店舗|対象地域|対象者限定|会員限定|県内|市内|県限定|市限定|地域限定)/.test(text)
   const conditions = snippetAround(text, /(?:参加方法|条件|対象者)/, 700)
   const benefit = snippetAround(text, /(?:特典|ポイント進呈|プレゼント)/, 400)
 
-  let sourceConfidence = 35
+  let sourceConfidence = 55
   if (title.length >= 8) sourceConfidence += 20
   if (startsAt && endsAt) sourceConfidence += 20
   if (entryRequired !== null) sourceConfidence += 10
@@ -236,8 +394,30 @@ async function analyzeCampaign(html: string): Promise<CampaignAnalysis> {
     selectionBucket,
     sourceConfidence,
     status,
-    contentHash: await sha256(text.slice(0, 50000)),
-    metadata: { generally_eligible: generallyEligible, restricted, parser_version: 1 },
+    contentHash: await sha256(JSON.stringify({
+      parser_version: 3,
+      canonical_url: seed.canonicalUrl,
+      title,
+      starts_at: startsAt,
+      ends_at: endsAt,
+      entry_required: entryRequired,
+      spend_required: spendRequired,
+      lottery_only: lotteryOnly,
+      conditions,
+      benefit,
+      selection_score: score,
+      selection_bucket: selectionBucket,
+      source_confidence: sourceConfidence,
+      status,
+      body: text.slice(0, 50000),
+      feed: seed.metadata,
+    })),
+    metadata: {
+      ...seed.metadata,
+      generally_eligible: generallyEligible,
+      restricted,
+      parser_version: 3,
+    },
   }
 }
 
@@ -268,7 +448,7 @@ function campaignSteps(campaign: CampaignAnalysis): CampaignStep[] {
       step_order: 30,
       title: `${clip(campaign.title, 70)}の抽選・くじに参加`,
       action_type: 'tap',
-      frequency: 'once',
+      frequency: /毎日/.test(campaign.title) ? 'daily' : 'once',
       estimated_minutes: 1,
       instructions: '公式ページ上で本人が抽選・くじを実行します。',
     })
@@ -351,7 +531,7 @@ Deno.serve(async (req) => {
   try {
     const { data: sources, error: sourceError } = await supabase
       .from('point_sources')
-      .select('id, source_key, name, service_key, index_url, official_host')
+      .select('id, source_key, name, service_key, index_url, feed_url, official_host')
       .eq('is_enabled', true)
       .order('id')
     if (sourceError) throw sourceError
@@ -360,14 +540,29 @@ Deno.serve(async (req) => {
       summary.sources_checked += 1
       const checkedAt = new Date().toISOString()
       try {
-        const indexHtml = await fetchHtml(source.index_url)
-        const links = canonicalCampaignLinks(indexHtml, source)
-        summary.campaigns_found += links.length
+        const seeds = await discoverCampaignSeeds(source)
+        summary.campaigns_found += seeds.length
 
-        for (const canonicalUrl of links) {
+        for (const seed of seeds) {
+          const canonicalUrl = seed.canonicalUrl
           try {
-            const html = await fetchHtml(canonicalUrl)
-            const analysis = await analyzeCampaign(html)
+            let html = seed.title || ''
+            let pageFetchError: string | null = null
+            if (!seed.title) {
+              try {
+                html = await fetchHtml(canonicalUrl)
+              } catch (error) {
+                pageFetchError = clip(error instanceof Error ? error.message : String(error), 500)
+                html = `楽天PointClub キャンペーン ${String(seed.metadata.feed_id || '')}`
+              }
+            }
+            const analysis = await analyzeCampaign(html, seed)
+            if (pageFetchError) {
+              analysis.sourceConfidence = Math.min(analysis.sourceConfidence, 50)
+              analysis.status = 'review'
+              analysis.selectionBucket = 'review'
+              analysis.metadata.page_fetch_error = pageFetchError
+            }
             const { data: existing } = await supabase
               .from('point_campaigns')
               .select('id, content_hash')
