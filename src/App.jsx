@@ -6,6 +6,7 @@ import { ShoppingView } from './components/ShoppingView'
 import { WishView } from './components/WishView'
 import { PointActionsView } from './components/PointActionsView'
 import { useHouseholdData } from './hooks/useHouseholdData'
+import { useDailyReminder } from './hooks/useDailyReminder'
 import {
   cancelRepayment,
   completePointActivity,
@@ -15,12 +16,18 @@ import {
   createShoppingItem,
   createShoppingItems,
   createWish,
+  createExpense,
+  createReceiptUrl,
+  createWishComment,
   recordRepayment,
   removeLoan,
   removeInventoryItem,
   removePointActivity,
   removeShoppingItem,
   removeWish,
+  removeExpense,
+  removeWishComment,
+  saveNotificationPreferences,
   updateShoppingItem,
   updateInventoryItem,
   updatePointActivity,
@@ -164,6 +171,30 @@ function App() {
     }
   }, [refresh])
 
+  const showReminder = useCallback((message) => {
+    setToast({ type: 'success', message })
+  }, [])
+
+  useDailyReminder({
+    memberId: member?.user_id,
+    preferences: snapshot.notificationPreferences,
+    snapshot,
+    onReminder: showReminder,
+  })
+
+  async function handleOpenReceipt(path) {
+    const receiptWindow = window.open('about:blank', '_blank')
+    if (receiptWindow) receiptWindow.opener = null
+    try {
+      const url = await createReceiptUrl(path)
+      if (receiptWindow) receiptWindow.location.replace(url)
+      else window.location.assign(url)
+    } catch (receiptError) {
+      receiptWindow?.close()
+      setToast({ type: 'error', message: messageFromError(receiptError) })
+    }
+  }
+
   async function handleSignOut() {
     localStorage.removeItem(MEMBER_CACHE_KEY)
     await supabase.auth.signOut()
@@ -203,6 +234,15 @@ function App() {
         inventoryItems={snapshot.inventoryItems}
         pointActivities={snapshot.pointActivities}
         pointCompletions={snapshot.pointCompletions}
+        wishes={snapshot.wishes}
+        notificationPreferences={snapshot.notificationPreferences}
+        notificationSchemaReady={snapshot.notificationSchemaReady}
+        online={online}
+        busy={busy}
+        onSaveNotification={(input) => runAction(
+          () => saveNotificationPreferences({ ...input, user_id: member.user_id }),
+          '朝夕のお知らせ設定を保存しました',
+        )}
         onNavigate={setTab}
       />
     )
@@ -211,12 +251,19 @@ function App() {
       <LoanView
         loans={snapshot.loans}
         repayments={snapshot.repayments}
+        expenses={snapshot.expenses}
         online={online}
         busy={busy}
         onCreate={(input) => runAction(() => createLoan(input), '貸し借りを登録しました')}
         onDelete={(id) => runAction(() => removeLoan(id), '貸し借りを削除しました')}
         onRepay={(input) => runAction(() => recordRepayment(input), '返済を記録しました')}
         onCancelRepayment={(id) => runAction(() => cancelRepayment(id), '返済を取り消しました')}
+        onCreateExpense={(input, receipt) => runAction(
+          () => createExpense(input, receipt, member.user_id),
+          '家計簿に保存しました',
+        )}
+        onDeleteExpense={(expense) => runAction(() => removeExpense(expense), '支出を削除しました')}
+        onOpenReceipt={handleOpenReceipt}
       />
     )
   } else if (tab === 'shopping') {
@@ -271,11 +318,18 @@ function App() {
     currentView = (
       <WishView
         wishes={snapshot.wishes}
+        comments={snapshot.wishComments}
+        memberId={member.user_id}
         online={online}
         busy={busy}
         onCreate={(input) => runAction(() => createWish(input), 'Wishを追加しました')}
         onUpdate={(id, input) => runAction(() => updateWish(id, input), 'Wishを更新しました')}
         onDelete={(id) => runAction(() => removeWish(id), 'Wishを削除しました')}
+        onAddComment={(wishId, body) => runAction(
+          () => createWishComment({ wish_id: wishId, body, created_by: member.user_id }),
+          'コメントを追加しました',
+        )}
+        onDeleteComment={(id) => runAction(() => removeWishComment(id), 'コメントを削除しました')}
         onAddToShopping={(wish) => runAction(
           () => createShoppingItem({
             name: wish.title,
