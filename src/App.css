@@ -2373,6 +2373,421 @@
   margin-top: 18px;
 }
 
+.money-mode-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  margin: 0 0 16px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.money-mode-tabs button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 12px;
+  color: var(--muted);
+  background: transparent;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.money-mode-tabs button.active {
+  color: white;
+  background: linear-gradient(135deg, rgba(111, 85, 255, 0.5), rgba(65, 194, 223, 0.24));
+}
+
+.expense-summary,
+.today-summary,
+.reminder-settings,
+.frequent-shopping {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface-soft);
+}
+
+.expense-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px;
+}
+
+.expense-summary div {
+  display: grid;
+  gap: 4px;
+}
+
+.expense-summary span,
+.expense-summary small,
+.receipt-note,
+.expense-card-main > span,
+.expense-card-main > p,
+.frequent-shopping > div > span {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.expense-summary strong {
+  font-size: 25px;
+}
+
+.expense-summary button,
+.panel-form-heading button,
+.expense-card-actions button,
+.wish-comment button {
+  border: 0;
+  color: #b8adff;
+  background: transparent;
+  font-size: 9px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.expense-form {
+  margin-top: 14px;
+}
+
+.expense-form select,
+.expense-form textarea,
+.expense-month-filter input,
+.reminder-setting-row input[type='time'] {
+  width: 100%;
+  min-height: 43px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: white;
+  background: rgba(4, 6, 17, 0.58);
+  font: inherit;
+}
+
+.expense-form textarea {
+  min-height: 78px;
+  padding-top: 11px;
+  resize: vertical;
+}
+
+.receipt-capture input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+}
+
+.receipt-capture b {
+  display: grid;
+  min-height: 46px;
+  place-items: center;
+  border: 1px dashed rgba(117, 216, 239, 0.35);
+  border-radius: 12px;
+  color: #91e6f8;
+  background: rgba(53, 183, 216, 0.07);
+  cursor: pointer;
+}
+
+.receipt-note {
+  margin: -5px 0 2px;
+  line-height: 1.6;
+}
+
+.expense-month-filter {
+  margin: 16px 0 10px;
+}
+
+.expense-month-filter label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.expense-month-filter input {
+  width: 160px;
+}
+
+.expense-list {
+  display: grid;
+  gap: 10px;
+}
+
+.expense-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 9px 12px;
+  padding: 15px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-soft);
+}
+
+.expense-card-main {
+  min-width: 0;
+}
+
+.expense-card-main h3,
+.expense-card-main p {
+  overflow: hidden;
+  margin: 4px 0 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.expense-card > strong {
+  align-self: center;
+}
+
+.expense-card-actions {
+  display: flex;
+  grid-column: 1 / -1;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.expense-card-actions .danger-action,
+.wish-comment .danger-action {
+  color: #ff9eb5;
+}
+
+.frequent-shopping {
+  margin-bottom: 12px;
+  padding: 14px;
+}
+
+.frequent-shopping > div:first-child {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 9px;
+}
+
+.frequent-shopping-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.frequent-shopping-chips button {
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid rgba(117, 216, 239, 0.24);
+  border-radius: 99px;
+  color: #91e6f8;
+  background: rgba(53, 183, 216, 0.08);
+  font-size: 9px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.inventory-expiry {
+  color: #91e6f8 !important;
+  font-weight: 800;
+}
+
+.inventory-expiry.soon {
+  color: #ffd684 !important;
+}
+
+.today-summary {
+  margin-top: 14px;
+  padding: 17px;
+}
+
+.today-summary-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.today-summary-heading h3 {
+  margin: 3px 0 0;
+  font-size: 17px;
+}
+
+.today-summary-heading > span {
+  color: var(--dim);
+  font-size: 8px;
+}
+
+.today-summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.today-summary-grid button {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: baseline;
+  gap: 3px;
+  min-height: 47px;
+  padding: 0 11px;
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  border-radius: 12px;
+  color: white;
+  background: rgba(255, 255, 255, 0.025);
+  text-align: left;
+  cursor: pointer;
+}
+
+.today-summary-grid span,
+.today-summary-grid small {
+  color: var(--muted);
+  font-size: 8px;
+}
+
+.today-summary-grid strong {
+  color: #b8adff;
+  font-size: 19px;
+}
+
+.reminder-settings {
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.reminder-settings-toggle {
+  display: flex;
+  width: 100%;
+  min-height: 49px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 15px;
+  border: 0;
+  color: white;
+  background: transparent;
+  cursor: pointer;
+}
+
+.reminder-settings-toggle b {
+  color: #91e6f8;
+  font-size: 9px;
+}
+
+.reminder-settings-panel {
+  display: grid;
+  gap: 11px;
+  padding: 0 15px 15px;
+}
+
+.reminder-settings-panel > p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.6;
+}
+
+.reminder-setting-row {
+  display: grid;
+  grid-template-columns: 1fr 130px;
+  align-items: center;
+  gap: 12px;
+}
+
+.reminder-setting-row label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+}
+
+.reminder-setting-row input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  accent-color: #755dff;
+}
+
+.wish-discussion {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.wish-discussion summary {
+  color: #d9d2ff;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.wish-discussion summary b {
+  margin-left: 4px;
+  color: var(--muted);
+}
+
+.wish-comment-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.wish-comment-list > p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.wish-comment {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 3px 10px;
+  padding: 10px;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.wish-comment span {
+  color: #ffb5c6;
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.wish-comment p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #e5e2ef;
+  font-size: 10px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.wish-comment-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px;
+  margin-top: 9px;
+}
+
+.wish-comment-form input {
+  min-width: 0;
+  min-height: 38px;
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: white;
+  background: rgba(4, 6, 17, 0.58);
+}
+
+.wish-comment-form button {
+  padding: 0 13px;
+  border: 0;
+  border-radius: 10px;
+  color: white;
+  background: rgba(111, 85, 255, 0.58);
+  font-weight: 800;
+}
+
 .replenish-button {
   flex: 0 0 auto;
   min-height: 31px;
