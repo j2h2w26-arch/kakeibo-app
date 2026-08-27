@@ -16,6 +16,8 @@ const EMPTY_SNAPSHOT = {
   wishConsultationSchemaReady: false,
   notificationPreferences: null,
   notificationSchemaReady: false,
+  lifeTasks: [],
+  lifeTasksSchemaReady: false,
   pointActivities: [],
   pointCompletions: [],
   pointSources: [],
@@ -102,6 +104,10 @@ export function useHouseholdData(enabled) {
       channel = channel.on('postgres_changes', { event: '*', schema: 'public', table: 'notification_preferences' }, queueRefresh)
     }
 
+    if (snapshot.lifeTasksSchemaReady) {
+      channel = channel.on('postgres_changes', { event: '*', schema: 'public', table: 'life_tasks' }, queueRefresh)
+    }
+
     if (snapshot.pointCampaignSchemaReady) {
       for (const table of [
         'point_sources',
@@ -126,6 +132,7 @@ export function useHouseholdData(enabled) {
     refresh,
     snapshot.expenseSchemaReady,
     snapshot.inventorySchemaReady,
+    snapshot.lifeTasksSchemaReady,
     snapshot.notificationSchemaReady,
     snapshot.pointCampaignSchemaReady,
     snapshot.wishConsultationSchemaReady,

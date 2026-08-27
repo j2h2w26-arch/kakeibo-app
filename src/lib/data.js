@@ -22,6 +22,7 @@ export async function fetchHouseholdSnapshot() {
     wishesResult,
     wishCommentsResult,
     notificationPreferencesResult,
+    lifeTasksResult,
     pointActivitiesResult,
     pointCompletionsResult,
     pointSourcesResult,
@@ -39,6 +40,7 @@ export async function fetchHouseholdSnapshot() {
     supabase.from('wishes').select('*').order('created_at', { ascending: false }),
     supabase.from('wish_comments').select('*').order('created_at'),
     supabase.from('notification_preferences').select('*').maybeSingle(),
+    supabase.from('life_tasks').select('*').order('created_at', { ascending: false }),
     supabase.from('point_activities').select('*').order('sort_order').order('created_at'),
     supabase.from('point_activity_completions').select('*').order('completed_at', { ascending: false }),
     supabase.from('point_sources').select('*').order('id'),
@@ -46,7 +48,7 @@ export async function fetchHouseholdSnapshot() {
     supabase.from('point_campaign_steps').select('*').order('step_order'),
     supabase.from('point_campaign_member_states').select('*'),
     supabase.from('point_service_preferences').select('*'),
-    supabase.from('point_sync_runs').select('*').order('started_at', { ascending: false }).limit(1),
+    supabase.from('point_sync_runs').select('*').order('started_at', { ascending: false }).limit(10),
   ])
 
   const loans = unwrap(loansResult) || []
@@ -60,6 +62,7 @@ export async function fetchHouseholdSnapshot() {
     && !['42P01', 'PGRST205', 'PGRST116'].includes(notificationPreferencesResult.error.code)
     ? unwrapOptional(notificationPreferencesResult)
     : notificationPreferencesResult.data
+  const lifeTasks = unwrapOptional(lifeTasksResult) || []
   const pointActivities = unwrap(pointActivitiesResult) || []
   const pointCompletions = unwrap(pointCompletionsResult) || []
   const pointSources = unwrapOptional(pointSourcesResult) || []
@@ -89,6 +92,8 @@ export async function fetchHouseholdSnapshot() {
     wishConsultationSchemaReady: !wishCommentsResult.error,
     notificationPreferences,
     notificationSchemaReady: !notificationPreferencesResult.error,
+    lifeTasks,
+    lifeTasksSchemaReady: !lifeTasksResult.error,
     pointActivities,
     pointCompletions,
     pointSources,
@@ -223,6 +228,18 @@ export async function saveNotificationPreferences(input) {
     ...input,
     updated_at: new Date().toISOString(),
   }, { onConflict: 'user_id' }))
+}
+
+export async function createLifeTask(input) {
+  unwrap(await supabase.from('life_tasks').insert([input]))
+}
+
+export async function updateLifeTask(id, input) {
+  unwrap(await supabase.from('life_tasks').update(input).eq('id', id))
+}
+
+export async function removeLifeTask(id) {
+  unwrap(await supabase.from('life_tasks').delete().eq('id', id))
 }
 
 export async function createPointActivity(input) {

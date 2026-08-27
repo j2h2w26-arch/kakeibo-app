@@ -202,6 +202,8 @@ export function PointActionsView({
     ))
     .slice(0, 2)
   const latestSync = syncRuns[0]
+  const latestSuccessfulSync = syncRuns.find((run) => run.status === 'success')
+  const syncIsHealthy = campaignSchemaReady && latestSync?.status === 'success'
   const currentCompletions = useMemo(() => {
     const result = new Map()
     for (const activity of activeActivities) {
@@ -306,6 +308,14 @@ export function PointActionsView({
       </div>
 
       <p className="points-safety-note">自動操作は行いません。公式ページで内容を確認し、本人が操作してください。</p>
+
+      <div className={`points-sync-status ${syncIsHealthy ? 'is-healthy' : 'needs-attention'}`} aria-live="polite">
+        <span>{syncIsHealthy ? '自動更新 ON' : '自動更新を確認中'}</span>
+        <div>
+          <strong>最新情報：{syncLabel(latestSuccessfulSync?.finished_at)}</strong>
+          <small>毎日 6:30・10:15 に楽天公式情報を確認</small>
+        </div>
+      </div>
 
       {showForm && (
         <form className="panel-form points-form" onSubmit={submitActivity}>
