@@ -3,7 +3,7 @@ import { HomeView } from './components/HomeView'
 import { LoanView } from './components/LoanView'
 import { LoginScreen } from './components/LoginScreen'
 import { ShoppingView } from './components/ShoppingView'
-import { WishView } from './components/WishView'
+import { WishHubView } from './components/WishHubView'
 import { PointActionsView } from './components/PointActionsView'
 import { useHouseholdData } from './hooks/useHouseholdData'
 import { useDailyReminder } from './hooks/useDailyReminder'
@@ -19,6 +19,7 @@ import {
   createExpense,
   createReceiptUrl,
   createWishComment,
+  createLifeTask,
   recordRepayment,
   removeLoan,
   removeInventoryItem,
@@ -27,11 +28,13 @@ import {
   removeWish,
   removeExpense,
   removeWishComment,
+  removeLifeTask,
   saveNotificationPreferences,
   updateShoppingItem,
   updateInventoryItem,
   updatePointActivity,
   updateWish,
+  updateLifeTask,
   undoPointActivityCompletion,
   setPointCampaignDecision,
   setPointServicePreference,
@@ -316,29 +319,43 @@ function App() {
     )
   } else if (tab === 'wishes') {
     currentView = (
-      <WishView
+      <WishHubView
         wishes={snapshot.wishes}
-        comments={snapshot.wishComments}
-        memberId={member.user_id}
-        online={online}
-        busy={busy}
-        onCreate={(input) => runAction(() => createWish(input), 'Wishを追加しました')}
-        onUpdate={(id, input) => runAction(() => updateWish(id, input), 'Wishを更新しました')}
-        onDelete={(id) => runAction(() => removeWish(id), 'Wishを削除しました')}
-        onAddComment={(wishId, body) => runAction(
-          () => createWishComment({ wish_id: wishId, body, created_by: member.user_id }),
-          'コメントを追加しました',
-        )}
-        onDeleteComment={(id) => runAction(() => removeWishComment(id), 'コメントを削除しました')}
-        onAddToShopping={(wish) => runAction(
-          () => createShoppingItem({
-            name: wish.title,
-            category: 'その他',
-            is_purchased: false,
-            purchased_at: null,
-          }),
-          '買い物リストに追加しました',
-        )}
+        lifeTasks={snapshot.lifeTasks}
+        wishProps={{
+          comments: snapshot.wishComments,
+          memberId: member.user_id,
+          online,
+          busy,
+          onCreate: (input) => runAction(() => createWish(input), 'Wishを追加しました'),
+          onUpdate: (id, input) => runAction(() => updateWish(id, input), 'Wishを更新しました'),
+          onDelete: (id) => runAction(() => removeWish(id), 'Wishを削除しました'),
+          onAddComment: (wishId, body) => runAction(
+            () => createWishComment({ wish_id: wishId, body, created_by: member.user_id }),
+            'コメントを追加しました',
+          ),
+          onDeleteComment: (id) => runAction(() => removeWishComment(id), 'コメントを削除しました'),
+          onAddToShopping: (wish) => runAction(
+            () => createShoppingItem({
+              name: wish.title,
+              category: 'その他',
+              is_purchased: false,
+              purchased_at: null,
+            }),
+            '買い物リストに追加しました',
+          ),
+        }}
+        lifeTaskProps={{
+          schemaReady: snapshot.lifeTasksSchemaReady,
+          online,
+          busy,
+          onCreate: (input) => runAction(
+            () => createLifeTask({ ...input, created_by: member.user_id }),
+            '人生ToDoを追加しました',
+          ),
+          onUpdate: (id, input) => runAction(() => updateLifeTask(id, input), '人生ToDoを更新しました'),
+          onDelete: (id) => runAction(() => removeLifeTask(id), '人生ToDoを削除しました'),
+        }}
       />
     )
   } else if (tab === 'points') {

@@ -320,6 +320,11 @@
   cursor: pointer;
 }
 
+.module-card:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+  min-height: 112px;
+}
+
 .module-card::after {
   position: absolute;
   right: -34px;
@@ -336,6 +341,7 @@
 .module-card.cyan { --module-color: #75d8ef; --module-glow: rgba(53, 183, 216, 0.2); }
 .module-card.rose { --module-color: #ff9eb5; --module-glow: rgba(255, 127, 154, 0.18); }
 .module-card.amber { --module-color: #ffd684; --module-glow: rgba(255, 203, 107, 0.18); }
+.module-card.mint { --module-color: #72e6c0; --module-glow: rgba(72, 211, 165, 0.18); }
 
 .module-icon {
   display: grid;
@@ -1588,6 +1594,59 @@
 
 .points-form {
   margin-bottom: 18px;
+}
+
+.points-sync-status {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin: 10px 0 16px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 202, 95, 0.14);
+  border-radius: 16px;
+  background: rgba(255, 202, 95, 0.045);
+}
+
+.points-sync-status > span {
+  flex: 0 0 auto;
+  padding: 5px 8px;
+  border-radius: 999px;
+  color: #ffd982;
+  background: rgba(255, 202, 95, 0.12);
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+}
+
+.points-sync-status.is-healthy > span::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: #63e6be;
+  box-shadow: 0 0 10px rgba(99, 230, 190, 0.7);
+}
+
+.points-sync-status.needs-attention > span {
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.points-sync-status > div {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.points-sync-status strong {
+  font-size: 11px;
+}
+
+.points-sync-status small {
+  color: var(--dim);
+  font-size: 8px;
 }
 
 .points-form-grid {
@@ -2845,6 +2904,327 @@
   flex: 0 0 auto;
   min-height: 31px;
   padding: 0 8px;
+}
+
+.wish-hub-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 18px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 17px;
+  background: rgba(11, 13, 28, 0.76);
+}
+
+.wish-hub-tabs button {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 7px;
+  min-height: 48px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 13px;
+  color: var(--muted);
+  background: transparent;
+  text-align: left;
+}
+
+.wish-hub-tabs button > span {
+  font-size: 18px;
+}
+
+.wish-hub-tabs button strong {
+  font-size: 11px;
+}
+
+.wish-hub-tabs button small {
+  min-width: 22px;
+  padding: 3px 5px;
+  border-radius: 999px;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 7px;
+  text-align: center;
+}
+
+.wish-hub-tabs button.active {
+  color: white;
+  border-color: rgba(255, 158, 181, 0.18);
+  background: linear-gradient(135deg, rgba(255, 126, 160, 0.15), rgba(111, 85, 255, 0.13));
+}
+
+.wish-hub-tabs button:last-child.active {
+  border-color: rgba(114, 230, 192, 0.18);
+  background: linear-gradient(135deg, rgba(72, 211, 165, 0.15), rgba(111, 85, 255, 0.11));
+}
+
+.life-tasks-heading {
+  margin-bottom: 18px;
+}
+
+.life-tasks-add-button {
+  color: #08251d;
+  background: linear-gradient(145deg, #8af0d0, #4ec8a0);
+  box-shadow: 0 12px 28px rgba(72, 211, 165, 0.2);
+}
+
+.life-tasks-summary {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(114, 230, 192, 0.16);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(72, 211, 165, 0.14), transparent 11rem),
+    rgba(27, 28, 44, 0.78);
+}
+
+.life-tasks-summary > div {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.life-tasks-summary span,
+.life-tasks-summary p {
+  color: var(--dim);
+}
+
+.life-tasks-summary span {
+  font-size: 9px;
+}
+
+.life-tasks-summary strong {
+  font-size: 20px;
+}
+
+.life-tasks-summary strong small {
+  margin-left: 3px;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.life-tasks-summary > p {
+  grid-column: 1 / -1;
+  margin: 3px 2px 0;
+  font-size: 9px;
+  line-height: 1.65;
+}
+
+.life-task-form {
+  margin-bottom: 18px;
+}
+
+.life-task-form-grid {
+  grid-template-columns: 1fr 1fr;
+}
+
+.life-task-form select,
+.life-task-form textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: white;
+  background: rgba(4, 6, 17, 0.58);
+}
+
+.life-task-form select {
+  min-height: 44px;
+  padding: 0 12px;
+}
+
+.life-task-form textarea {
+  padding: 12px;
+  resize: vertical;
+}
+
+.life-task-submit {
+  background: linear-gradient(135deg, #3da985, #61d2ad);
+}
+
+.life-task-filter-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 2px 8px;
+}
+
+.life-task-filter-heading strong {
+  font-size: 11px;
+}
+
+.life-task-filter-heading span {
+  color: var(--dim);
+  font-size: 8px;
+}
+
+.life-task-owner-filter {
+  grid-template-columns: repeat(4, 1fr);
+  margin-bottom: 8px;
+}
+
+.life-task-owner-filter button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.life-task-owner-filter button small {
+  color: inherit;
+  font-size: 7px;
+  opacity: 0.65;
+}
+
+.life-task-type-filter,
+.life-task-status-filter {
+  grid-template-columns: repeat(3, 1fr);
+  margin-bottom: 8px;
+}
+
+.life-task-status-filter {
+  margin-bottom: 16px;
+}
+
+.life-task-owner-filter button.active,
+.life-task-type-filter button.active,
+.life-task-status-filter button.active {
+  color: #d5fff1;
+  background: rgba(72, 211, 165, 0.14);
+}
+
+.life-task-list {
+  display: grid;
+  gap: 12px;
+}
+
+.life-task-card {
+  --life-task-color: #9ea2b7;
+  padding: 17px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--life-task-color);
+  border-radius: 19px;
+  background:
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--life-task-color) 10%, transparent), transparent 11rem),
+    rgba(27, 28, 44, 0.78);
+}
+
+.life-task-card.priority-高 { --life-task-color: #ff9eb5; }
+.life-task-card.priority-中 { --life-task-color: #ffd684; }
+.life-task-card.priority-低 { --life-task-color: #72e6c0; }
+
+.life-task-card.is-complete {
+  opacity: 0.66;
+}
+
+.life-task-card.is-complete h3 {
+  text-decoration: line-through;
+}
+
+.life-task-card-topline,
+.life-task-meta,
+.life-task-status-actions,
+.life-task-actions {
+  display: flex;
+  align-items: center;
+}
+
+.life-task-card-topline {
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.life-task-card-topline span,
+.life-task-card-topline b,
+.life-task-meta span {
+  padding: 4px 7px;
+  border-radius: 999px;
+  font-size: 8px;
+}
+
+.life-task-card-topline span {
+  color: #bdf8e5;
+  background: rgba(72, 211, 165, 0.1);
+}
+
+.life-task-card-topline b {
+  color: var(--life-task-color);
+  background: color-mix(in srgb, var(--life-task-color) 10%, transparent);
+}
+
+.life-task-card h3 {
+  margin: 13px 0 9px;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.life-task-meta {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.life-task-meta span {
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.life-task-meta span.overdue {
+  color: #ffb0c2;
+  background: rgba(255, 127, 154, 0.09);
+}
+
+.life-task-card > p {
+  margin: 11px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.life-task-status-actions {
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.life-task-status-actions button,
+.life-task-actions button {
+  min-height: 34px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.035);
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.life-task-status-actions button {
+  flex: 1;
+}
+
+.life-task-status-actions button.active {
+  color: #d5fff1;
+  border-color: rgba(72, 211, 165, 0.2);
+  background: rgba(72, 211, 165, 0.12);
+}
+
+.life-task-actions {
+  justify-content: flex-end;
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.life-task-actions button.danger-action {
+  color: var(--danger);
+  background: rgba(255, 127, 154, 0.05);
 }
 
 @keyframes view-in {
