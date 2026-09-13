@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { AppIcon } from './AppIcon'
 import { DailyReminderSettings } from './DailyReminderSettings'
 import { calculateLoanSummary, formatYen, pointPeriodKey, todayInTokyo } from '../lib/format'
 import { todaySummary } from '../lib/daily'
@@ -164,7 +165,7 @@ export function HomeView({
             key={module.id}
             onClick={() => onNavigate(module.id)}
           >
-            <span className="module-icon" aria-hidden="true">{module.icon}</span>
+            <span className="module-icon" aria-hidden="true"><AppIcon name={module.id} /></span>
             <span className="module-copy">
               <small>{module.eyebrow}</small>
               <strong>{module.title}</strong>

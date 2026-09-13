@@ -115,6 +115,10 @@ export async function recognizeReceipt(file, onProgress = () => {}) {
   let worker
   try {
     worker = await createWorker(['jpn', 'eng'], 1, {
+      workerPath: `${window.location.origin}/ocr/worker.min.js`,
+      corePath: `${window.location.origin}/ocr`,
+      workerBlobURL: false,
+      errorHandler: () => {},
       logger: ({ status, progress }) => {
         if (typeof progress === 'number') onProgress({ status, progress })
       },

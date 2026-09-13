@@ -43,6 +43,7 @@ import {
 import { messageFromError } from './lib/format'
 import { supabase } from './lib/supabase'
 import './App.css'
+import { AppIcon } from './components/AppIcon'
 
 const MEMBER_CACHE_KEY = 'futari-wallet-member-v1'
 
@@ -418,7 +419,7 @@ function App() {
         </div>
       )}
 
-      <main className="app-content">{currentView}</main>
+      <main className="app-content" key={tab}>{currentView}</main>
 
       <nav className="bottom-nav" aria-label="メインメニュー">
         {NAV_ITEMS.map((item) => (
@@ -429,13 +430,13 @@ function App() {
             onClick={() => setTab(item.id)}
             aria-current={tab === item.id ? 'page' : undefined}
           >
-            <span aria-hidden="true">{item.icon}</span>
+            <span aria-hidden="true"><AppIcon name={item.id} /></span>
             <b>{item.label}</b>
           </button>
         ))}
       </nav>
 
-      {toast && <div className={`toast ${toast.type}`} role="status">{toast.message}</div>}
+      {toast && <div className={`toast ${toast.type}`} role={toast.type === 'error' ? 'alert' : 'status'}><span className="toast-symbol" aria-hidden="true">{toast.type === 'success' ? <AppIcon name="check" size={20} /> : '!'}</span><span>{toast.message}</span><button type="button" aria-label="通知を閉じる" onClick={() => setToast(null)}>×</button></div>}
     </div>
   )
 }

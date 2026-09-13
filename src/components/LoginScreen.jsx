@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { AppIcon } from './AppIcon'
 import { supabase } from '../lib/supabase'
 import { messageFromError } from '../lib/format'
 
@@ -7,6 +8,7 @@ export function LoginScreen() {
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -28,7 +30,7 @@ export function LoginScreen() {
   return (
     <main className="login-screen">
       <section className="login-card" aria-labelledby="login-title">
-        <div className="brand-mark" aria-hidden="true">⌂</div>
+        <div className="brand-mark" aria-hidden="true"><AppIcon name="home" size={32} /></div>
         <p className="eyebrow">FUTARI HOME</p>
         <h1 id="login-title">ふたりの暮らし</h1>
         <p className="login-copy">
@@ -48,14 +50,15 @@ export function LoginScreen() {
             />
           </label>
           <label>
-            <span>パスワード</span>
-            <input
-              type="password"
+            <span id="password-label">パスワード</span>
+            <div className="password-field"><input
+              aria-labelledby="password-label"
+              type={showPassword ? 'text' : 'password'}
               autoComplete="current-password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              placeholder="8文字以上"
-            />
+              placeholder="パスワードを入力"
+            /><button type="button" aria-pressed={showPassword} onClick={() => setShowPassword((value) => !value)}>{showPassword ? '隠す' : '表示'}</button></div>
           </label>
           {error && <p className="form-error" role="alert">{error}</p>}
           <button className="primary-button" type="submit" disabled={busy}>
