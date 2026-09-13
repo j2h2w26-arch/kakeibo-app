@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { formatDate, formatYen, parsePositiveYen, todayInTokyo } from '../lib/format'
+import { recognizeReceipt } from '../lib/receiptOcr'
 
 const CATEGORIES = ['食費', '日用品', '外食', '交通', '旅行', '固定費', 'その他']
 const PAYERS = ['夫', '妻', '共通']
@@ -21,6 +22,7 @@ export function ExpensePanel({ expenses, online, busy, onCreate, onDelete, onOpe
   const [receipt, setReceipt] = useState(null)
   const [month, setMonth] = useState(todayInTokyo().slice(0, 7))
   const [error, setError] = useState('')
+  const [ocrState, setOcrState] = useState({ status: 'idle', progress: 0, message: '' })
 
   const visibleExpenses = useMemo(() => expenses.filter(
     (expense) => expense.spent_on.startsWith(month),
@@ -31,6 +33,7 @@ export function ExpensePanel({ expenses, online, busy, onCreate, onDelete, onOpe
     setForm(EMPTY_EXPENSE())
     setReceipt(null)
     setError('')
+    setOcrState({ status: 'idle', progress: 0, message: '' })
     setShowForm(false)
   }
 
@@ -48,6 +51,38 @@ export function ExpensePanel({ expenses, online, busy, onCreate, onDelete, onOpe
     }
     setReceipt(file)
     setError('')
+    setOcrState({ status: 'idle', progress: 0, message: '' })
+  }
+
+  async function readReceipt() {
+    if (!receipt) return
+    setError('')
+    setOcrState({ status: 'reading', progress: 0, message: 'OCRを準備しています…' })
+    try {
+      const result = await recognizeReceipt(receipt, ({ progress }) => {
+        const percent = Math.max(0, Math.min(100, Math.round(progress * 100)))
+        setOcrState({ status: 'reading', progress: percent, message: `文字を読み取っています… ${percent}%` })
+      })
+      const { fields } = result
+      setForm((current) => ({
+        ...current,
+        spent_on: fields.spentOn || current.spent_on,
+        merchant: fields.merchant || current.merchant,
+        amount: fields.amount ? String(fields.amount) : current.amount,
+        items: fields.items || current.items,
+      }))
+      const detectedCount = [fields.spentOn, fields.merchant, fields.amount, fields.items].filter(Boolean).length
+      setOcrState({
+        status: 'done',
+        progress: 100,
+        message: detectedCount
+          ? `${detectedCount}項目の候補を入力しました。内容を確認・修正してください。`
+          : '候補を抽出できませんでした。写真を見ながら入力してください。',
+      })
+    } catch {
+      setOcrState({ status: 'error', progress: 0, message: '' })
+      setError('レシートを読み取れませんでした。明るい場所で撮ったJPEG・PNG画像をお試しください。')
+    }
   }
 
   async function submit(event) {
@@ -93,7 +128,20 @@ export function ExpensePanel({ expenses, online, busy, onCreate, onDelete, onOpe
             <input type="file" accept="image/*" capture="environment" onChange={chooseReceipt} />
             <b>{receipt ? `✓ ${receipt.name}` : 'カメラで撮る／写真を選ぶ'}</b>
           </label>
-          <p className="receipt-note">写真は夫婦だけが見られる非公開領域に保存されます。店名・金額・品目は確認して入力してください。</p>
+          {receipt && (
+            <div className="receipt-ocr">
+              <button type="button" onClick={readReceipt} disabled={ocrState.status === 'reading'}>
+                {ocrState.status === 'reading' ? '読み取り中…' : '写真から候補を読み取る'}
+              </button>
+              {ocrState.status === 'reading' && (
+                <progress max="100" value={ocrState.progress} aria-label="レシート文字認識の進み具合" />
+              )}
+              {ocrState.message && (
+                <p className={ocrState.status === 'done' ? 'ocr-result' : ''} role="status">{ocrState.message}</p>
+              )}
+            </div>
+          )}
+          <p className="receipt-note">文字認識はこの端末内で行われ、画像は外部OCRサービスへ送信されません。保存時の写真は夫婦だけが見られる非公開領域に置かれます。候補は必ず確認・修正してください。</p>
           <div className="form-grid">
             <label>
               <span>日付</span>
