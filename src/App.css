@@ -4017,18 +4017,55 @@ input::placeholder, textarea::placeholder { color: #a5aabe !important; }
 }
 
 .category-食材 {
-  color: #496148;
+  color: #36563f !important;
   background: #e2ebd9;
 }
 
 .category-日用品 {
-  color: #516477;
+  color: #4b5269 !important;
   background: #e2ebf1;
 }
 
 .category-その他 {
-  color: #665084;
+  color: #5f4a78 !important;
   background: #e7e2f2;
+}
+
+/* Light-theme contrast guardrails for compact shopping controls. */
+.theme-shopping .count-bubble {
+  border-color: #b6cbb2;
+  background: #edf4e8;
+}
+
+.theme-shopping .count-bubble strong {
+  color: #31543b;
+}
+
+.theme-shopping .shopping-mode-tabs span,
+.theme-shopping .inventory-filter span {
+  color: inherit;
+}
+
+.theme-shopping .frequent-shopping-chips button,
+.theme-shopping .inventory-shopping-button,
+.theme-shopping .replenish-button {
+  border-color: #afc9b8;
+  color: #2f5840;
+  background: #edf6f0;
+}
+
+.theme-shopping .bulk-add-preview span {
+  border-color: #c4b7d4;
+  color: #59466f;
+  background: #f0ecf5;
+}
+
+.theme-shopping .inventory-expiry {
+  color: #315d4a !important;
+}
+
+.theme-shopping .inventory-expiry.soon {
+  color: #704f12 !important;
 }
 
 .wish-card.priority-いつか { --wish-color: #69716a; --wish-glow: transparent; }
