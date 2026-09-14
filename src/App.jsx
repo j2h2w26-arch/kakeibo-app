@@ -52,8 +52,8 @@ const NAV_ITEMS = [
   { id: 'home', icon: '⌂', label: '選ぶ' },
   { id: 'money', icon: '¥', label: 'お金' },
   { id: 'shopping', icon: '✓', label: '買い物' },
-  { id: 'wishes', icon: '♡', label: 'Wish' },
-  { id: 'points', icon: '★', label: 'ポイ活' },
+  { id: 'wishes', icon: '♡', label: 'やりたい' },
+  { id: 'points', icon: '★', label: 'ポイント' },
 ]
 
 function readCachedMember(userId) {
@@ -68,7 +68,7 @@ function readCachedMember(userId) {
 function LoadingScreen({ message = '読み込んでいます…' }) {
   return (
     <main className="loading-screen">
-      <div className="brand-mark" aria-hidden="true">¥</div>
+      <div className="brand-mark" aria-hidden="true"><AppIcon name="home" size={28} /></div>
       <div className="loading-dots" aria-hidden="true"><span /><span /><span /></div>
       <p>{message}</p>
     </main>
@@ -392,10 +392,10 @@ function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell theme-${tab}`}>
       <header className="app-header">
         <div>
-          <p className="eyebrow">FUTARI HOME</p>
+          <p className="eyebrow">ふたりの暮らし</p>
           <h1>ふたりの暮らし</h1>
         </div>
         <div className="header-actions">
@@ -403,9 +403,9 @@ function App() {
             <i />
             {syncState === 'syncing' ? '同期中' : online ? '同期済み' : 'オフライン'}
           </span>
-          <button className="profile-button" type="button" title="設定を開く" onClick={() => setTab('settings')}>
-            {member.display_name.slice(0, 1)}
-            <span className="sr-only">設定を開く</span>
+          <button className="profile-button" type="button" onClick={() => setTab('settings')}>
+            <span className="profile-avatar" aria-hidden="true">{member.display_name.slice(0, 1)}</span>
+            <span>設定</span>
           </button>
         </div>
       </header>

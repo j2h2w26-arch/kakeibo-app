@@ -31,7 +31,7 @@ export function LoginScreen() {
     <main className="login-screen">
       <section className="login-card" aria-labelledby="login-title">
         <div className="brand-mark" aria-hidden="true"><AppIcon name="home" size={32} /></div>
-        <p className="eyebrow">FUTARI HOME</p>
+        <p className="eyebrow">家族の毎日</p>
         <h1 id="login-title">ふたりの暮らし</h1>
         <p className="login-copy">
           お金も、買い物も、ふたりの楽しみも。<br />毎日のことをひとつの場所に。
