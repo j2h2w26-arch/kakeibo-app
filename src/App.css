@@ -1,19 +1,27 @@
 :root {
-  --bg: #0c0d16;
-  --surface: rgba(26, 27, 43, 0.9);
-  --surface-strong: #1d1e30;
-  --surface-soft: rgba(255, 255, 255, 0.055);
-  --line: rgba(255, 255, 255, 0.09);
-  --text: #f7f7fb;
-  --muted: #b9bdce;
-  --dim: #a5aabe;
-  --primary: #7c6dfd;
-  --primary-strong: #6555f6;
-  --secondary: #35b7d8;
-  --success: #63d5a1;
-  --danger: #ff7f9a;
-  --warning: #ffcb6b;
-  --shadow: 0 22px 70px rgba(0, 0, 0, 0.28);
+  --bg: #f7f4ee;
+  --surface: rgba(255, 255, 255, 0.96);
+  --surface-strong: #ffffff;
+  --surface-soft: rgba(255, 255, 255, 0.82);
+  --line: #d8ddd4;
+  --text: #292f2c;
+  --muted: #626a63;
+  --dim: #6d756e;
+  --primary: #a84435;
+  --primary-strong: #87392e;
+  --secondary: #466343;
+  --success: #2f7153;
+  --danger: #a12f3e;
+  --warning: #775d22;
+  --money-soft: #f6dfd2;
+  --money-ink: #854b32;
+  --shopping-soft: #e2ebd9;
+  --shopping-ink: #466343;
+  --wishes-soft: #e7e2f2;
+  --wishes-ink: #665084;
+  --points-soft: #f6eac1;
+  --points-ink: #775d22;
+  --shadow: 0 14px 34px rgba(57, 72, 61, 0.1);
 }
 
 .sr-only {
@@ -30,8 +38,8 @@
 
 .eyebrow {
   margin: 0 0 5px;
-  color: #9589ff;
-  font-size: 10px;
+  color: var(--primary);
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.18em;
 }
@@ -3562,5 +3570,718 @@ input::placeholder, textarea::placeholder { color: #a5aabe !important; }
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* Warm Home refresh — 2026-09-14. See docs/ui-design.md. */
+.app-shell {
+  color: var(--text);
+}
+
+.app-header {
+  background: linear-gradient(180deg, rgba(247, 244, 238, 0.98) 72%, rgba(247, 244, 238, 0));
+}
+
+.app-header h1 {
+  color: var(--text);
+}
+
+.theme-home .app-header {
+  min-height: calc(62px + env(safe-area-inset-top));
+  justify-content: flex-end;
+  background: transparent;
+  backdrop-filter: none;
+}
+
+.theme-home .app-header > div:first-child {
+  display: none;
+}
+
+.sync-indicator {
+  color: var(--muted);
+}
+
+.sync-indicator i {
+  background: var(--success);
+  box-shadow: 0 0 0 4px rgba(47, 113, 83, 0.12);
+}
+
+.profile-button {
+  display: flex;
+  width: auto;
+  min-width: 76px;
+  height: 44px;
+  padding: 4px 12px 4px 4px;
+  gap: 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 5px 16px rgba(57, 72, 61, 0.08);
+  font-size: 12px;
+  place-items: center;
+}
+
+.profile-avatar {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--primary);
+  place-items: center;
+}
+
+.offline-banner {
+  border-color: #d9c98f;
+  color: #684f14;
+  background: #faf1cf;
+}
+
+.function-chooser {
+  min-height: calc(100dvh - 105px - env(safe-area-inset-top));
+  padding-top: clamp(4px, 1.5vh, 16px);
+}
+
+.function-chooser-heading {
+  margin-bottom: clamp(22px, 4vh, 36px);
+}
+
+.function-chooser-heading h2,
+.settings-view h2 {
+  color: var(--text);
+  font-size: clamp(30px, 8vw, 42px);
+  line-height: 1.18;
+}
+
+.function-chooser-heading > p:last-child,
+.settings-copy {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.function-choice {
+  min-height: clamp(174px, 25vh, 224px);
+  padding: 18px;
+  border-color: color-mix(in srgb, var(--module-ink) 22%, transparent);
+  border-radius: 24px;
+  color: var(--module-ink);
+  background: var(--module-soft);
+  box-shadow: 0 9px 20px rgba(57, 72, 61, 0.08);
+}
+
+.function-choice.violet {
+  --module-color: var(--money-ink);
+  --module-ink: var(--money-ink);
+  --module-soft: var(--money-soft);
+}
+
+.function-choice.cyan {
+  --module-color: var(--shopping-ink);
+  --module-ink: var(--shopping-ink);
+  --module-soft: var(--shopping-soft);
+}
+
+.function-choice.rose {
+  --module-color: var(--wishes-ink);
+  --module-ink: var(--wishes-ink);
+  --module-soft: var(--wishes-soft);
+}
+
+.function-choice.amber {
+  --module-color: var(--points-ink);
+  --module-ink: var(--points-ink);
+  --module-soft: var(--points-soft);
+}
+
+.function-choice::after {
+  top: -35px;
+  right: -34px;
+  width: 112px;
+  height: 112px;
+  border-color: color-mix(in srgb, var(--module-ink) 15%, transparent);
+}
+
+.function-choice-icon {
+  width: 55px;
+  height: 55px;
+  border-radius: 18px;
+  color: var(--module-ink);
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.function-choice-copy strong {
+  color: var(--module-ink);
+  font-size: clamp(21px, 5.5vw, 26px);
+}
+
+.function-choice-copy > span {
+  color: color-mix(in srgb, var(--module-ink) 84%, #fff);
+  font-size: 13px;
+}
+
+.function-choice > i {
+  color: var(--module-ink);
+  top: 16px;
+  bottom: auto;
+}
+
+.back-button {
+  border-color: var(--line);
+  color: var(--secondary);
+  background: #fff;
+}
+
+.round-add-button,
+.primary-button,
+.secondary-button {
+  color: #fff;
+  background: var(--primary);
+  box-shadow: 0 8px 20px rgba(168, 68, 53, 0.2);
+}
+
+.theme-shopping .round-add-button,
+.theme-shopping .primary-button,
+.theme-shopping .secondary-button,
+.life-tasks-add-button,
+.life-task-submit {
+  color: #fff;
+  background: var(--shopping-ink);
+  box-shadow: 0 8px 20px rgba(70, 99, 67, 0.2);
+}
+
+.theme-wishes .round-add-button,
+.theme-wishes .primary-button,
+.theme-wishes .secondary-button,
+.wish-add-button,
+.wish-submit {
+  color: #fff;
+  background: var(--wishes-ink);
+  box-shadow: 0 8px 20px rgba(102, 80, 132, 0.2);
+}
+
+.theme-points .round-add-button,
+.theme-points .primary-button,
+.theme-points .secondary-button,
+.points-add-button {
+  color: #fff;
+  background: var(--points-ink);
+  box-shadow: 0 8px 20px rgba(119, 93, 34, 0.2);
+}
+
+.balance-card {
+  border-color: #e9c9b7;
+  color: var(--money-ink);
+  background: var(--money-soft);
+  box-shadow: 0 12px 30px rgba(133, 75, 50, 0.12);
+}
+
+.balance-card p,
+.balance-card > span.settled-amount {
+  color: var(--money-ink);
+}
+
+.balance-card::after {
+  border-color: rgba(133, 75, 50, 0.12);
+}
+
+.mini-stats article,
+.panel-form,
+.quick-add,
+.record-card,
+.wish-card,
+.shopping-item,
+.point-card,
+.campaign-card,
+.inventory-card,
+.life-task-card,
+.expense-card,
+.empty-state,
+.expense-summary,
+.today-summary,
+.reminder-settings,
+.frequent-shopping,
+.inventory-summary,
+.points-sync-status,
+.campaign-sync-panel,
+.inventory-onboarding,
+.points-summary {
+  border-color: var(--line);
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: var(--shadow);
+}
+
+.panel-form,
+.quick-add {
+  border-radius: 20px;
+}
+
+.record-details {
+  border-color: var(--line);
+  background: #faf9f5;
+}
+
+.record-card.is-complete,
+.point-card.is-complete {
+  border-color: #bdd9c9;
+  background: #f4faf6;
+}
+
+.status-pill,
+.wish-person {
+  color: var(--wishes-ink);
+  background: var(--wishes-soft);
+}
+
+.status-pill.complete,
+.campaign-joined {
+  color: var(--success);
+  background: #e5f2e9;
+}
+
+.progress-track,
+.points-progress {
+  background: #e9ece6;
+}
+
+.progress-track span,
+.points-progress i {
+  background: linear-gradient(90deg, var(--primary), #d89a63);
+}
+
+.empty-state {
+  border-style: dashed;
+  box-shadow: none;
+}
+
+.empty-state > span {
+  color: var(--shopping-ink);
+  background: var(--shopping-soft);
+}
+
+.empty-state strong,
+.wish-meta strong,
+.reminder-settings-toggle,
+.today-summary-grid button,
+.app-shell :is(input, select, textarea) {
+  color: var(--text);
+}
+
+.app-shell :is(input, select, textarea) {
+  border-color: #cbd2c7;
+  background: #fff;
+}
+
+.app-shell :is(input, textarea)::placeholder {
+  color: #7a827b !important;
+}
+
+.choice-row button,
+.filter-row button,
+.category-row button,
+.shopping-mode-tabs button,
+.inventory-filter button,
+.inventory-status-choice button,
+.inventory-status-buttons button,
+.wish-owner-filter button,
+.life-task-owner-filter button,
+.life-task-type-filter button,
+.life-task-status-filter button,
+.life-task-status-actions button,
+.life-task-actions button,
+.point-actions button,
+.campaign-actions button {
+  border-color: var(--line);
+  color: var(--muted);
+  background: #fff;
+}
+
+.choice-row button.selected,
+.filter-row button.active,
+.category-row button.active,
+.money-mode-tabs button.active {
+  border-color: #cc9b8c;
+  color: var(--money-ink);
+  background: var(--money-soft);
+}
+
+.shopping-mode-tabs button.active,
+.inventory-filter button.active,
+.inventory-status-choice button.active.status-enough,
+.inventory-status-buttons button.active.status-enough {
+  border-color: #9fbb99;
+  color: var(--shopping-ink);
+  background: var(--shopping-soft);
+}
+
+.wish-filter button.active,
+.wish-owner-filter button.active,
+.wish-hub-tabs button.active {
+  border-color: #bdb0d0;
+  color: var(--wishes-ink);
+  background: var(--wishes-soft);
+}
+
+.wish-hub-tabs button:last-child.active,
+.life-task-owner-filter button.active,
+.life-task-type-filter button.active,
+.life-task-status-filter button.active,
+.life-task-status-actions button.active {
+  border-color: #a9c3a4;
+  color: var(--shopping-ink);
+  background: var(--shopping-soft);
+}
+
+.filter-row,
+.shopping-mode-tabs,
+.inventory-filter,
+.wish-hub-tabs {
+  border-color: var(--line);
+  background: #ecefe9;
+}
+
+.wish-summary {
+  border-color: #cfc4dd;
+  color: var(--wishes-ink);
+  background: var(--wishes-soft);
+  box-shadow: 0 12px 30px rgba(102, 80, 132, 0.1);
+}
+
+.wish-summary > span,
+.wish-summary > p {
+  color: var(--wishes-ink);
+}
+
+.wish-summary::after {
+  color: rgba(102, 80, 132, 0.08);
+}
+
+.points-summary {
+  border-color: #e1cf8e;
+  color: var(--points-ink);
+  background: var(--points-soft);
+}
+
+.points-summary span,
+.points-summary p {
+  color: var(--points-ink);
+}
+
+.inventory-summary,
+.life-tasks-summary {
+  border-color: #bfd0b9;
+  color: var(--shopping-ink);
+  background: var(--shopping-soft);
+  box-shadow: 0 10px 25px rgba(70, 99, 67, 0.09);
+}
+
+.inventory-summary > div,
+.life-tasks-summary > div,
+.today-summary-grid button {
+  border-color: var(--line);
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.life-tasks-summary span,
+.life-tasks-summary p {
+  color: var(--shopping-ink);
+}
+
+.shopping-item,
+.expense-card,
+.point-card,
+.campaign-card,
+.life-task-card {
+  border-radius: 16px;
+}
+
+.shopping-item.purchased,
+.wish-card.is-complete,
+.life-task-card.is-complete {
+  opacity: 0.72;
+  background: #f3f4f1;
+}
+
+.check-button {
+  border-color: #8ea38a;
+  color: var(--shopping-ink);
+  background: #fff;
+}
+
+.check-button.checked {
+  border-color: var(--shopping-ink);
+  color: #fff;
+  background: var(--shopping-ink);
+  animation: gentle-pop 220ms ease-out;
+}
+
+.category-食材 {
+  color: #496148;
+  background: #e2ebd9;
+}
+
+.category-日用品 {
+  color: #516477;
+  background: #e2ebf1;
+}
+
+.category-その他 {
+  color: #665084;
+  background: #e7e2f2;
+}
+
+.wish-card.priority-いつか { --wish-color: #69716a; --wish-glow: transparent; }
+.wish-card.priority-ほしい { --wish-color: var(--wishes-ink); --wish-glow: transparent; }
+.wish-card.priority-最優先 { --wish-color: var(--points-ink); --wish-glow: transparent; }
+
+.wish-priority,
+.wish-meta span,
+.life-task-meta span,
+.campaign-tags span,
+.point-card-topline span {
+  color: var(--muted);
+  background: #eef0ec;
+}
+
+.wish-discussion,
+.expense-card-actions,
+.repayment-form,
+.history-row {
+  border-color: var(--line);
+}
+
+.wish-discussion summary,
+.inventory-expiry,
+.receipt-capture b,
+.receipt-ocr button,
+.expense-summary button,
+.panel-form-heading button,
+.expense-card-actions button,
+.wish-comment button,
+.point-official-link {
+  color: var(--secondary) !important;
+}
+
+.receipt-capture b,
+.receipt-ocr button {
+  border-color: #9db99a;
+  background: var(--shopping-soft);
+}
+
+.receipt-preview {
+  background: #eceee9;
+}
+
+.receipt-steps .current {
+  color: var(--secondary);
+  border-color: var(--secondary);
+}
+
+.receipt-ocr progress {
+  accent-color: var(--secondary);
+}
+
+.receipt-ocr .ocr-result {
+  color: var(--success);
+}
+
+.receipt-capture:focus-within b {
+  outline-color: #356847;
+}
+
+.password-field button {
+  color: var(--secondary);
+}
+
+.login-screen,
+.loading-screen {
+  background:
+    radial-gradient(circle at 15% 15%, rgba(246, 223, 210, 0.82), transparent 20rem),
+    radial-gradient(circle at 85% 80%, rgba(226, 235, 217, 0.78), transparent 22rem),
+    var(--bg);
+}
+
+.login-card {
+  border-color: var(--line);
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 18px 45px rgba(57, 72, 61, 0.12);
+}
+
+.login-card input {
+  min-height: 48px;
+  border-color: #cbd2c7;
+  color: var(--text);
+  background: #fff;
+  font-size: 16px;
+}
+
+.login-card input::placeholder {
+  color: #7a827b !important;
+}
+
+.brand-mark {
+  color: #fff;
+  background: var(--primary);
+  box-shadow: 0 10px 24px rgba(168, 68, 53, 0.22);
+}
+
+.brand-mark.warning {
+  color: #fff;
+  background: var(--warning);
+}
+
+.bottom-nav {
+  border-color: var(--line);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 -8px 26px rgba(57, 72, 61, 0.08);
+  backdrop-filter: blur(16px);
+}
+
+.bottom-nav button {
+  color: var(--muted);
+}
+
+.bottom-nav button.active {
+  color: var(--active-ink, var(--primary));
+  background: var(--active-soft, var(--money-soft));
+  box-shadow: none;
+}
+
+.theme-money { --active-ink: var(--money-ink); --active-soft: var(--money-soft); }
+.theme-shopping { --active-ink: var(--shopping-ink); --active-soft: var(--shopping-soft); }
+.theme-wishes { --active-ink: var(--wishes-ink); --active-soft: var(--wishes-soft); }
+.theme-points { --active-ink: var(--points-ink); --active-soft: var(--points-soft); }
+
+.toast {
+  border-color: #b8d1c2;
+  color: #214c38;
+  background: #f2faf5;
+  box-shadow: 0 14px 34px rgba(36, 73, 53, 0.18);
+}
+
+.toast.success,
+.toast.error {
+  border-color: #b8d1c2;
+  color: #214c38;
+  background: #f2faf5;
+}
+
+.toast.error {
+  border-color: #e2b8c0;
+  color: #782433;
+  background: #fff5f6;
+}
+
+.toast-symbol {
+  color: var(--success);
+  background: #deeee4;
+}
+
+.toast.error .toast-symbol {
+  color: var(--danger);
+  background: #f6dfe3;
+}
+
+.toast button {
+  color: inherit;
+}
+
+.form-error,
+.danger-link,
+.remove-button,
+.danger-action,
+.life-task-meta span.overdue {
+  color: var(--danger) !important;
+}
+
+.app-shell :is(p, small),
+.panel-form-heading span,
+.record-topline,
+.record-bottomline,
+.record-title-row span,
+.history-row > div small,
+.history-row > div span,
+.shopping-item-copy > span,
+.section-heading span,
+.wish-card > p,
+.point-card > p,
+.point-source,
+.campaign-card > p,
+.campaign-section-heading small,
+.points-sync-status small,
+.inventory-card > p,
+.inventory-audit span,
+.settings-copy,
+.login-copy,
+.login-note,
+.receipt-note,
+.receipt-privacy,
+.expense-card-main > span,
+.expense-card-main > p,
+.frequent-shopping > div > span {
+  color: var(--muted);
+}
+
+.app-shell :is(.panel-form, .record-card, .shopping-item, .wish-card, .point-card, .campaign-card, .inventory-card, .life-task-card, .expense-card) :is(small, p, span) {
+  font-size: max(12px, 0.75rem);
+  line-height: 1.55;
+}
+
+.app-shell :is(.panel-form label > span, .form-grid label > span, .login-form label > span) {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.app-shell :is(input, select, textarea) {
+  min-height: 48px;
+  font-size: 16px;
+}
+
+.app-shell button:not(:disabled):active {
+  transform: scale(0.98);
+}
+
+.function-choice:not(:disabled):active {
+  transform: scale(0.97);
+  box-shadow: 0 3px 8px rgba(57, 72, 61, 0.1);
+}
+
+@keyframes gentle-pop {
+  50% { transform: scale(1.12) rotate(-4deg); }
+}
+
+@media (hover: hover) {
+  button:not(:disabled):hover {
+    filter: none;
+  }
+
+  .function-choice:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--module-ink) 42%, transparent);
+    box-shadow: 0 13px 25px rgba(57, 72, 61, 0.12);
+  }
+
+  .primary-button:hover,
+  .secondary-button:hover,
+  .round-add-button:hover {
+    filter: brightness(0.96);
+  }
+}
+
+@media (max-width: 420px) {
+  .function-choice {
+    min-height: clamp(158px, 23vh, 202px);
+    padding: 16px;
+  }
+
+  .function-choice-icon {
+    width: 50px;
+    height: 50px;
+  }
+
+  .function-choice-copy > span {
+    font-size: 12px;
   }
 }

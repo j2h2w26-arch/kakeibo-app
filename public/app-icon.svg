@@ -1,19 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <defs>
-    <linearGradient id="bg" x1="72" y1="40" x2="440" y2="472" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#8B7CFF"/>
-      <stop offset="0.52" stop-color="#6555F6"/>
-      <stop offset="1" stop-color="#35B7D8"/>
-    </linearGradient>
-    <linearGradient id="shine" x1="150" y1="120" x2="358" y2="390" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FFFFFF" stop-opacity="0.98"/>
-      <stop offset="1" stop-color="#EAE7FF" stop-opacity="0.9"/>
-    </linearGradient>
-  </defs>
-  <rect width="512" height="512" rx="116" fill="#0C0D16"/>
-  <circle cx="256" cy="246" r="182" fill="url(#bg)"/>
-  <circle cx="202" cy="177" r="76" fill="#FFFFFF" fill-opacity="0.12"/>
-  <path d="M155 168h42l59 86 59-86h42l-70 99h53v30h-63v25h63v30h-63v59h-42v-59h-63v-30h63v-25h-63v-30h53l-70-99Z" fill="url(#shine)"/>
-  <circle cx="150" cy="365" r="22" fill="#FFB4C8"/>
-  <circle cx="362" cy="365" r="22" fill="#A7F3D0"/>
+  <rect width="512" height="512" rx="116" fill="#F7F4EE"/>
+  <rect x="68" y="68" width="376" height="376" rx="112" fill="#A84435"/>
+  <circle cx="124" cy="126" r="56" fill="#F6DFD2" fill-opacity=".22"/>
+  <circle cx="397" cy="392" r="78" fill="#E2EBD9" fill-opacity=".16"/>
+  <path d="m145 245 111-95 111 95v123H145Z" fill="none" stroke="#FFF" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M218 367v-88h76v88" fill="none" stroke="#FFF" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="98" cy="403" r="18" fill="#F6EAC1"/>
+  <circle cx="414" cy="109" r="18" fill="#E7E2F2"/>
 </svg>
