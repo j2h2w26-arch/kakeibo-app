@@ -5,6 +5,7 @@ import { LoginScreen } from './components/LoginScreen'
 import { ShoppingView } from './components/ShoppingView'
 import { WishHubView } from './components/WishHubView'
 import { PointActionsView } from './components/PointActionsView'
+import { SettingsView } from './components/SettingsView'
 import { useHouseholdData } from './hooks/useHouseholdData'
 import { useDailyReminder } from './hooks/useDailyReminder'
 import {
@@ -48,7 +49,7 @@ import { AppIcon } from './components/AppIcon'
 const MEMBER_CACHE_KEY = 'futari-wallet-member-v1'
 
 const NAV_ITEMS = [
-  { id: 'home', icon: '⌂', label: 'ホーム' },
+  { id: 'home', icon: '⌂', label: '選ぶ' },
   { id: 'money', icon: '¥', label: 'お金' },
   { id: 'shopping', icon: '✓', label: '買い物' },
   { id: 'wishes', icon: '♡', label: 'Wish' },
@@ -230,25 +231,7 @@ function App() {
     currentView = <LoadingScreen message="ふたりのデータを同期しています…" />
   } else if (tab === 'home') {
     currentView = (
-      <HomeView
-        member={member}
-        loans={snapshot.loans}
-        repayments={snapshot.repayments}
-        items={snapshot.items}
-        inventoryItems={snapshot.inventoryItems}
-        pointActivities={snapshot.pointActivities}
-        pointCompletions={snapshot.pointCompletions}
-        wishes={snapshot.wishes}
-        notificationPreferences={snapshot.notificationPreferences}
-        notificationSchemaReady={snapshot.notificationSchemaReady}
-        online={online}
-        busy={busy}
-        onSaveNotification={(input) => runAction(
-          () => saveNotificationPreferences({ ...input, user_id: member.user_id }),
-          '朝夕のお知らせ設定を保存しました',
-        )}
-        onNavigate={setTab}
-      />
+      <HomeView member={member} onNavigate={setTab} />
     )
   } else if (tab === 'money') {
     currentView = (
@@ -390,6 +373,20 @@ function App() {
         onSync={() => runAction(() => syncPointCampaigns(), '公式情報を更新しました')}
       />
     )
+  } else if (tab === 'settings') {
+    currentView = (
+      <SettingsView
+        preferences={snapshot.notificationPreferences}
+        online={online}
+        busy={busy}
+        onBack={() => setTab('home')}
+        onSignOut={handleSignOut}
+        onSave={(input) => runAction(
+          () => saveNotificationPreferences({ ...input, user_id: member.user_id }),
+          '朝夕のお知らせ設定を保存しました',
+        )}
+      />
+    )
   } else {
     currentView = null
   }
@@ -406,9 +403,9 @@ function App() {
             <i />
             {syncState === 'syncing' ? '同期中' : online ? '同期済み' : 'オフライン'}
           </span>
-          <button className="profile-button" type="button" onClick={() => window.confirm('ログアウトしますか？') && handleSignOut()}>
+          <button className="profile-button" type="button" title="設定を開く" onClick={() => setTab('settings')}>
             {member.display_name.slice(0, 1)}
-            <span className="sr-only">ログアウト</span>
+            <span className="sr-only">設定を開く</span>
           </button>
         </div>
       </header>
@@ -421,7 +418,7 @@ function App() {
 
       <main className="app-content" key={tab}>{currentView}</main>
 
-      <nav className="bottom-nav" aria-label="メインメニュー">
+      {tab !== 'home' && tab !== 'settings' && <nav className="bottom-nav" aria-label="機能を切り替える">
         {NAV_ITEMS.map((item) => (
           <button
             className={tab === item.id ? 'active' : ''}
@@ -434,7 +431,7 @@ function App() {
             <b>{item.label}</b>
           </button>
         ))}
-      </nav>
+      </nav>}
 
       {toast && <div className={`toast ${toast.type}`} role={toast.type === 'error' ? 'alert' : 'status'}><span className="toast-symbol" aria-hidden="true">{toast.type === 'success' ? <AppIcon name="check" size={20} /> : '!'}</span><span>{toast.message}</span><button type="button" aria-label="通知を閉じる" onClick={() => setToast(null)}>×</button></div>}
     </div>
