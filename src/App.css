@@ -5,8 +5,8 @@
   --surface-soft: rgba(255, 255, 255, 0.055);
   --line: rgba(255, 255, 255, 0.09);
   --text: #f7f7fb;
-  --muted: #999caf;
-  --dim: #6e7185;
+  --muted: #b9bdce;
+  --dim: #a5aabe;
   --primary: #7c6dfd;
   --primary-strong: #6555f6;
   --secondary: #35b7d8;
@@ -2607,6 +2607,45 @@
   line-height: 1.6;
 }
 
+.receipt-ocr {
+  display: grid;
+  gap: 8px;
+}
+
+.receipt-ocr button {
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid rgba(145, 230, 248, 0.35);
+  border-radius: 12px;
+  color: #91e6f8;
+  background: rgba(53, 183, 216, 0.1);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.receipt-ocr button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.receipt-ocr progress {
+  width: 100%;
+  height: 8px;
+  accent-color: #75d8ef;
+}
+
+.receipt-ocr p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.receipt-ocr .ocr-result {
+  color: #9cf0c6;
+}
+
 .expense-month-filter {
   margin: 16px 0 10px;
 }
@@ -3290,6 +3329,69 @@
   .module-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Shared readability and interaction layer. See docs/ui-design.md. */
+button, summary { touch-action: manipulation; }
+button { transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease; }
+button:not(:disabled):active { transform: scale(0.97); }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible {
+  outline: 3px solid #b9adff;
+  outline-offset: 3px;
+}
+input::placeholder, textarea::placeholder { color: #a5aabe !important; }
+.app-shell button { min-height: 44px; }
+.profile-button, .check-button { min-width: 44px; }
+.bottom-nav button { min-height: 62px; gap: 6px; }
+.bottom-nav button span { background: transparent; }
+.bottom-nav button b { font-size: 12px; }
+.bottom-nav button.active { box-shadow: inset 0 2px 0 #c8c0ff, 0 7px 22px #4c3fbe40; }
+.home-greeting > p:last-child, .module-copy > span, .record-title-row span,
+.record-topline, .record-bottomline, .home-stats > article > span,
+.panel-form label > span, .form-grid label > span, .login-form label > span,
+.expense-summary span, .expense-summary small, .expense-card-main > span,
+.expense-card-main > p, .receipt-note, .login-note, .life-task-card > p { font-size: 13px; line-height: 1.65; }
+.module-copy small, .home-section-heading > span, .life-task-meta span,
+.life-task-card-topline span, .life-task-card-topline b { font-size: 11px; }
+.module-card { min-height: 155px; padding-bottom: 36px; }
+.module-copy strong { font-size: 18px; }
+.module-card > em { font-size: 10px; }
+.home-hero-label { font-size: 13px; color: #efedff; }
+.home-hero > button { font-size: 13px; padding: 10px 16px; }
+.home-stats strong { font-size: 24px; font-variant-numeric: tabular-nums; }
+.record-title-row b, .expense-summary strong { font-variant-numeric: tabular-nums; }
+.expense-summary button, .panel-form-heading button, .expense-card-actions button,
+.life-task-status-actions button, .life-task-actions button { font-size: 12px; padding: 9px 12px; }
+.expense-summary button { border-radius: 12px; background: #7c6dfd26; border: 1px solid #a99fff66; color: #e5e0ff; }
+.receipt-steps { display: flex; gap: 6px; padding: 0; margin: 0 0 18px; list-style: none; }
+.receipt-steps li { flex: 1; padding: 10px 4px; border-bottom: 2px solid var(--line); color: var(--muted); font-size: 12px; text-align: center; }
+.receipt-steps .current { color: #a2edfc; border-color: #75d8ef; font-weight: 800; }
+.receipt-capture:focus-within b { outline: 3px solid #b9adff; outline-offset: 3px; }
+.receipt-capture b { display: flex; justify-content: center; gap: 10px; padding: 16px; overflow-wrap: anywhere; font-size: 14px; }
+.receipt-capture svg { flex-shrink: 0; }
+.receipt-preview { display: block; width: 100%; max-height: 240px; object-fit: contain; background: #0c0d16; border-radius: 14px; margin-bottom: 14px; }
+.receipt-note { margin: 12px 0; }
+.receipt-privacy { margin: 0 0 18px; color: var(--muted); font-size: 12px; line-height: 1.7; }
+.receipt-privacy summary { cursor: pointer; padding: 10px 0; }
+.receipt-privacy p { margin-top: 0; }
+.password-field { position: relative; }
+.password-field input { padding-right: 70px; }
+.password-field button { position: absolute; right: 3px; top: 2px; min-width: 58px; min-height: 44px; border: 0; border-radius: 10px; color: #d4cdff; background: transparent; font-size: 13px; cursor: pointer; }
+.toast { display: flex; align-items: center; gap: 10px; text-align: left; font-size: 14px; }
+.toast > span:nth-child(2) { flex: 1; }
+.toast-symbol { display: grid; place-items: center; width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%; background: #63d5a126; color: #a7edcc; }
+.toast.error .toast-symbol { color: #ffb9c9; background: #ff7f9a26; }
+.toast button { flex-shrink: 0; min-width: 44px; border: 0; border-radius: 10px; background: transparent; color: white; font-size: 24px; cursor: pointer; }
+@media (hover: hover) {
+  button:not(:disabled):hover { filter: brightness(1.12); }
+  .module-card:hover { transform: translateY(-3px); border-color: var(--module-color); box-shadow: 0 12px 28px #0004; }
+}
+@media (max-width: 420px) {
+  .module-card { grid-template-columns: 1fr; gap: 10px; }
+  .home-hero { grid-template-columns: 1fr; gap: 14px; }
+  .home-hero > button { margin-top: 2px; }
+  .expense-summary { flex-wrap: wrap; }
+  .life-task-status-actions { flex-wrap: wrap; }
 }
 
 @media (prefers-reduced-motion: reduce) {

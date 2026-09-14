@@ -40,6 +40,7 @@ export default defineConfig({
         ],
       },
       workbox: {
+        globIgnores: ['**/ocr/**'],
         navigateFallback: '/index.html',
         cleanupOutdatedCaches: true,
       },
