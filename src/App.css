@@ -81,9 +81,28 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  min-height: 32px;
+  padding: 4px 5px;
+  border: 0;
   color: var(--muted);
+  background: transparent;
+  font: inherit;
   font-size: 11px;
   font-weight: 700;
+}
+
+.sync-indicator:not(:disabled) {
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.sync-indicator:disabled {
+  opacity: 1;
+}
+
+.sync-indicator:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--primary) 34%, transparent);
+  outline-offset: 1px;
 }
 
 .sync-indicator i {
@@ -119,7 +138,8 @@
   place-items: center;
 }
 
-.offline-banner {
+.offline-banner,
+.sync-error-banner {
   margin: 0 20px 10px;
   padding: 10px 14px;
   border: 1px solid rgba(255, 203, 107, 0.2);
@@ -128,6 +148,29 @@
   background: rgba(255, 203, 107, 0.09);
   font-size: 12px;
   text-align: center;
+}
+
+.sync-error-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-color: rgba(255, 127, 154, 0.3);
+  color: #ffd0d9;
+  background: rgba(255, 127, 154, 0.09);
+}
+
+.sync-error-banner button {
+  flex-shrink: 0;
+  min-height: 32px;
+  padding: 5px 10px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
 }
 
 .app-content {
@@ -2243,6 +2286,10 @@
   border-color: rgba(255, 127, 154, 0.34);
 }
 
+.toast.warning {
+  border-color: rgba(255, 203, 107, 0.38);
+}
+
 .login-screen,
 .loading-screen {
   display: grid;
@@ -3638,6 +3685,12 @@ input::placeholder, textarea::placeholder { color: #a5aabe !important; }
   background: #faf1cf;
 }
 
+.sync-error-banner {
+  border-color: #e2b8c0;
+  color: #782433;
+  background: #fff5f6;
+}
+
 .function-chooser {
   min-height: calc(100dvh - 105px - env(safe-area-inset-top));
   padding-top: clamp(4px, 1.5vh, 16px);
@@ -4199,7 +4252,8 @@ input::placeholder, textarea::placeholder { color: #a5aabe !important; }
 }
 
 .toast.success,
-.toast.error {
+.toast.error,
+.toast.warning {
   border-color: #b8d1c2;
   color: #214c38;
   background: #f2faf5;
@@ -4211,6 +4265,12 @@ input::placeholder, textarea::placeholder { color: #a5aabe !important; }
   background: #fff5f6;
 }
 
+.toast.warning {
+  border-color: #d9c98f;
+  color: #684f14;
+  background: #fff8df;
+}
+
 .toast-symbol {
   color: var(--success);
   background: #deeee4;
@@ -4219,6 +4279,11 @@ input::placeholder, textarea::placeholder { color: #a5aabe !important; }
 .toast.error .toast-symbol {
   color: var(--danger);
   background: #f6dfe3;
+}
+
+.toast.warning .toast-symbol {
+  color: var(--warning);
+  background: #f4e8b9;
 }
 
 .toast button {

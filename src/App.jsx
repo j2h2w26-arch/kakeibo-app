@@ -43,6 +43,7 @@ import {
 } from './lib/data'
 import { messageFromError } from './lib/format'
 import { supabase } from './lib/supabase'
+import { deriveSyncStatus } from './lib/syncStatus'
 import './App.css'
 import { AppIcon } from './components/AppIcon'
 
@@ -86,7 +87,18 @@ function App() {
   const [busy, setBusy] = useState(false)
   const [toast, setToast] = useState(null)
 
-  const { snapshot, loading, syncState, error, refresh } = useHouseholdData(Boolean(member))
+  const {
+    snapshot,
+    loading,
+    syncState,
+    realtimeState,
+    lastSyncedAt,
+    error,
+    refresh,
+    retrySync,
+    clearLocalData,
+  } = useHouseholdData(Boolean(member))
+  const syncStatus = deriveSyncStatus({ online, syncState, realtimeState })
 
   useEffect(() => {
     let mounted = true
@@ -153,10 +165,6 @@ function App() {
     return () => window.clearTimeout(timer)
   }, [toast])
 
-  useEffect(() => {
-    if (error) setToast({ type: 'error', message: messageFromError(error) })
-  }, [error])
-
   const runAction = useCallback(async (action, successMessage) => {
     if (!navigator.onLine) {
       setToast({ type: 'error', message: 'オフライン中は編集できません。' })
@@ -164,9 +172,15 @@ function App() {
     }
     setBusy(true)
     try {
-      await action()
-      await refresh({ quiet: true })
-      setToast({ type: 'success', message: successMessage })
+      const actionResult = await action()
+      const refreshResult = await refresh({ quiet: true })
+      const warnings = []
+      if (actionResult?.warning) warnings.push(actionResult.warning)
+      if (!refreshResult?.ok) warnings.push('保存は完了しましたが、最新表示の取得に失敗しました。「同期エラー」から再試行できます。')
+      setToast({
+        type: warnings.length > 0 ? 'warning' : 'success',
+        message: warnings.length > 0 ? warnings.join(' ') : successMessage,
+      })
       return true
     } catch (actionError) {
       setToast({ type: 'error', message: messageFromError(actionError) })
@@ -201,8 +215,13 @@ function App() {
   }
 
   async function handleSignOut() {
+    const { error: signOutError } = await supabase.auth.signOut()
+    if (signOutError) {
+      setToast({ type: 'error', message: messageFromError(signOutError) })
+      return
+    }
+    clearLocalData()
     localStorage.removeItem(MEMBER_CACHE_KEY)
-    await supabase.auth.signOut()
   }
 
   if (authLoading) return <LoadingScreen />
@@ -399,10 +418,17 @@ function App() {
           <h1>ふたりの暮らし</h1>
         </div>
         <div className="header-actions">
-          <span className={`sync-indicator ${syncState}`} title="同期状態">
+          <button
+            className={`sync-indicator ${syncStatus.kind}`}
+            type="button"
+            title={lastSyncedAt ? `最終同期: ${new Date(lastSyncedAt).toLocaleString('ja-JP')}` : '同期状態'}
+            aria-label={syncStatus.retryable ? '同期エラー。押すと再試行します' : `同期状態: ${syncStatus.label}`}
+            onClick={retrySync}
+            disabled={!syncStatus.retryable || syncState === 'syncing'}
+          >
             <i />
-            {syncState === 'syncing' ? '同期中' : online ? '同期済み' : 'オフライン'}
-          </span>
+            {syncStatus.label}
+          </button>
           <button className="profile-button" type="button" onClick={() => setTab('settings')}>
             <span className="profile-avatar" aria-hidden="true">{member.display_name.slice(0, 1)}</span>
             <span>設定</span>
@@ -413,6 +439,13 @@ function App() {
       {!online && (
         <div className="offline-banner" role="status">
           オフラインです。直近のデータを表示しています。
+        </div>
+      )}
+
+      {online && syncStatus.kind === 'error' && (
+        <div className="sync-error-banner" role="alert" title={error ? messageFromError(error) : undefined}>
+          <span>最新データを取得できませんでした。端末内のデータを表示しています。</span>
+          <button type="button" onClick={retrySync} disabled={syncState === 'syncing'}>再試行</button>
         </div>
       )}
 

@@ -41,6 +41,8 @@ npm run build
 
 本番反映前に[`supabase/README.md`](supabase/README.md)の手順で、マイグレーション、夫婦2ユーザー、メンバー登録を設定してください。
 
+Freeプランでの漏洩パスワード保護の扱い、端末キャッシュ、レシート画像の運用は[`docs/security-operations.md`](docs/security-operations.md)を正本とします。
+
 ## Deployment order
 
 1. Supabaseの準備マイグレーションを適用
