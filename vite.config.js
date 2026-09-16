@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.svg', 'futari-home-apple-touch-icon.png'],
       manifest: {
         name: 'ふたりの暮らし',
         short_name: 'ふたり暮らし',
@@ -22,14 +22,16 @@ export default defineConfig({
         categories: ['lifestyle', 'finance', 'shopping'],
         icons: [
           {
-            src: '/pwa-192x192.png',
+            src: '/futari-home-192x192.png',
             sizes: '192x192',
             type: 'image/png',
+            purpose: 'any maskable',
           },
           {
-            src: '/pwa-512x512.png',
+            src: '/futari-home-512x512.png',
             sizes: '512x512',
             type: 'image/png',
+            purpose: 'any maskable',
           },
           {
             src: '/app-icon.svg',
