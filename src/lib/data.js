@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { mapRepayments } from './format'
+import { collectPages } from './pagination'
 
 function unwrap(result) {
   if (result.error) throw result.error
@@ -10,6 +11,10 @@ function unwrapOptional(result) {
   if (!result.error) return result.data
   if (['42P01', 'PGRST205'].includes(result.error.code)) return []
   throw result.error
+}
+
+function fetchAllRows(queryFactory) {
+  return collectPages((from, to) => queryFactory().range(from, to))
 }
 
 export async function fetchHouseholdSnapshot() {
@@ -32,22 +37,22 @@ export async function fetchHouseholdSnapshot() {
     pointServicePreferencesResult,
     pointSyncRunsResult,
   ] = await Promise.all([
-    supabase.from('loans').select('*').order('date', { ascending: false }),
-    supabase.from('repayments').select('*').order('date', { ascending: false }),
-    supabase.from('shopping_items').select('*').order('created_at', { ascending: false }),
-    supabase.from('inventory_items').select('*').order('updated_at', { ascending: false }),
-    supabase.from('household_expenses').select('*').order('spent_on', { ascending: false }).order('created_at', { ascending: false }),
-    supabase.from('wishes').select('*').order('created_at', { ascending: false }),
-    supabase.from('wish_comments').select('*').order('created_at'),
+    fetchAllRows(() => supabase.from('loans').select('*').order('date', { ascending: false }).order('id')),
+    fetchAllRows(() => supabase.from('repayments').select('*').order('date', { ascending: false }).order('id')),
+    fetchAllRows(() => supabase.from('shopping_items').select('*').order('created_at', { ascending: false }).order('id')),
+    fetchAllRows(() => supabase.from('inventory_items').select('*').order('updated_at', { ascending: false }).order('id')),
+    fetchAllRows(() => supabase.from('household_expenses').select('*').order('spent_on', { ascending: false }).order('created_at', { ascending: false }).order('id')),
+    fetchAllRows(() => supabase.from('wishes').select('*').order('created_at', { ascending: false }).order('id')),
+    fetchAllRows(() => supabase.from('wish_comments').select('*').order('created_at').order('id')),
     supabase.from('notification_preferences').select('*').maybeSingle(),
-    supabase.from('life_tasks').select('*').order('created_at', { ascending: false }),
-    supabase.from('point_activities').select('*').order('sort_order').order('created_at'),
-    supabase.from('point_activity_completions').select('*').order('completed_at', { ascending: false }),
-    supabase.from('point_sources').select('*').order('id'),
-    supabase.from('point_campaigns').select('*').order('selection_score', { ascending: false }),
-    supabase.from('point_campaign_steps').select('*').order('step_order'),
-    supabase.from('point_campaign_member_states').select('*'),
-    supabase.from('point_service_preferences').select('*'),
+    fetchAllRows(() => supabase.from('life_tasks').select('*').order('created_at', { ascending: false }).order('id')),
+    fetchAllRows(() => supabase.from('point_activities').select('*').order('sort_order').order('created_at').order('id')),
+    fetchAllRows(() => supabase.from('point_activity_completions').select('*').order('completed_at', { ascending: false }).order('id')),
+    fetchAllRows(() => supabase.from('point_sources').select('*').order('id')),
+    fetchAllRows(() => supabase.from('point_campaigns').select('*').order('selection_score', { ascending: false }).order('id')),
+    fetchAllRows(() => supabase.from('point_campaign_steps').select('*').order('step_order').order('id')),
+    fetchAllRows(() => supabase.from('point_campaign_member_states').select('*').order('campaign_id').order('user_id')),
+    fetchAllRows(() => supabase.from('point_service_preferences').select('*').order('user_id').order('service_key')),
     supabase.from('point_sync_runs').select('*').order('started_at', { ascending: false }).limit(10),
   ])
 
@@ -192,10 +197,14 @@ export async function createExpense(input, receipt, userId) {
 }
 
 export async function removeExpense(expense) {
-  if (expense.receipt_path) {
-    unwrap(await supabase.storage.from('receipts').remove([expense.receipt_path]))
-  }
   unwrap(await supabase.from('household_expenses').delete().eq('id', expense.id))
+  if (!expense.receipt_path) return null
+
+  const cleanup = await supabase.storage.from('receipts').remove([expense.receipt_path])
+  if (cleanup.error) {
+    return { warning: '支出は削除しましたが、レシート画像の後片付けに失敗しました。時間をおいて再確認してください。' }
+  }
+  return null
 }
 
 export async function createReceiptUrl(path) {
