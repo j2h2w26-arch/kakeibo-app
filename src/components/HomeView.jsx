@@ -16,7 +16,7 @@ const MODULES = [
   {
     id: 'wishes',
     title: '未来',
-    description: 'Wish・人生ToDo',
+    description: '目標・人生ToDo・Wish',
     tone: 'rose',
   },
   {
