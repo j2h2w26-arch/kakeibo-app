@@ -1,5 +1,6 @@
 import { normalizeShoppingName } from './shopping.js'
 import { pointPeriodKey } from './format.js'
+import { choreDueState } from './chores.js'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -62,7 +63,7 @@ export function reminderPeriod(now, preferences) {
   return null
 }
 
-export function todaySummary({ items, inventoryItems, pointActivities, pointCompletions, wishes, memberId, today }) {
+export function todaySummary({ items, inventoryItems, pointActivities, pointCompletions, wishes, chores = [], memberId, today }) {
   const currentPeriodDate = new Date(`${today}T12:00:00+09:00`)
   const shopping = items.filter((item) => !item.is_purchased).length
   const expiring = expiringInventory(inventoryItems, today).length
@@ -81,6 +82,10 @@ export function todaySummary({ items, inventoryItems, pointActivities, pointComp
     && daysUntil(wish.candidate_date, today) !== null
     && daysUntil(wish.candidate_date, today) <= 30
   )).length
+  const dueChores = chores.filter((chore) => {
+    const state = choreDueState(chore, today)
+    return state.kind === 'overdue' || state.kind === 'today'
+  }).length
 
-  return { shopping, expiring, points, wishPlans }
+  return { shopping, expiring, points, wishPlans, dueChores }
 }

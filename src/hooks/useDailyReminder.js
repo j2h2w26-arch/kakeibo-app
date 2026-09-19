@@ -8,6 +8,7 @@ function reminderMessage(summary) {
     summary.expiring ? `期限間近${summary.expiring}件` : null,
     summary.points ? `ポイ活${summary.points}件` : null,
     summary.wishPlans ? `Wish予定${summary.wishPlans}件` : null,
+    summary.dueChores ? `期限の家事${summary.dueChores}件` : null,
   ].filter(Boolean)
   return parts.length > 0 ? parts.join('・') : '今日の共有Todoはありません。'
 }
@@ -29,6 +30,7 @@ export function useDailyReminder({ memberId, preferences, snapshot, onReminder }
       pointActivities: snapshot.pointActivities,
       pointCompletions: snapshot.pointCompletions,
       wishes: snapshot.wishes,
+      chores: snapshot.chores,
       memberId,
       today,
     })

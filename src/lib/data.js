@@ -28,6 +28,8 @@ export async function fetchHouseholdSnapshot() {
     wishCommentsResult,
     notificationPreferencesResult,
     lifeTasksResult,
+    choresResult,
+    choreCompletionsResult,
     pointActivitiesResult,
     pointCompletionsResult,
     pointSourcesResult,
@@ -46,6 +48,8 @@ export async function fetchHouseholdSnapshot() {
     fetchAllRows(() => supabase.from('wish_comments').select('*').order('created_at').order('id')),
     supabase.from('notification_preferences').select('*').maybeSingle(),
     fetchAllRows(() => supabase.from('life_tasks').select('*').order('created_at', { ascending: false }).order('id')),
+    fetchAllRows(() => supabase.from('household_chores').select('*').order('sort_order').order('next_due_on').order('id')),
+    fetchAllRows(() => supabase.from('household_chore_completions').select('*').order('completed_on', { ascending: false }).order('completed_at', { ascending: false }).order('id')),
     fetchAllRows(() => supabase.from('point_activities').select('*').order('sort_order').order('created_at').order('id')),
     fetchAllRows(() => supabase.from('point_activity_completions').select('*').order('completed_at', { ascending: false }).order('id')),
     fetchAllRows(() => supabase.from('point_sources').select('*').order('id')),
@@ -68,6 +72,8 @@ export async function fetchHouseholdSnapshot() {
     ? unwrapOptional(notificationPreferencesResult)
     : notificationPreferencesResult.data
   const lifeTasks = unwrapOptional(lifeTasksResult) || []
+  const chores = unwrapOptional(choresResult) || []
+  const choreCompletions = unwrapOptional(choreCompletionsResult) || []
   const pointActivities = unwrap(pointActivitiesResult) || []
   const pointCompletions = unwrap(pointCompletionsResult) || []
   const pointSources = unwrapOptional(pointSourcesResult) || []
@@ -99,6 +105,9 @@ export async function fetchHouseholdSnapshot() {
     notificationSchemaReady: !notificationPreferencesResult.error,
     lifeTasks,
     lifeTasksSchemaReady: !lifeTasksResult.error,
+    chores,
+    choreCompletions,
+    choresSchemaReady: !choresResult.error && !choreCompletionsResult.error,
     pointActivities,
     pointCompletions,
     pointSources,
@@ -249,6 +258,22 @@ export async function updateLifeTask(id, input) {
 
 export async function removeLifeTask(id) {
   unwrap(await supabase.from('life_tasks').delete().eq('id', id))
+}
+
+export async function createChore(input) {
+  unwrap(await supabase.from('household_chores').insert([input]))
+}
+
+export async function updateChore(id, input) {
+  unwrap(await supabase.from('household_chores').update(input).eq('id', id))
+}
+
+export async function completeChore(id, completedOn, note = null) {
+  unwrap(await supabase.rpc('complete_household_chore', {
+    p_chore_id: id,
+    p_completed_on: completedOn,
+    p_note: note,
+  }))
 }
 
 export async function createPointActivity(input) {

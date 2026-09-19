@@ -41,11 +41,13 @@ test('期限切れの家計データを復元せず端末から削除する', ()
 test('ログアウト時に現行版と旧版の家計キャッシュを両方削除する', () => {
   const storage = createStorage()
   storage.setItem(HOUSEHOLD_CACHE_KEY, '{}')
+  storage.setItem('futari-home-cache-v7', '{}')
   storage.setItem('futari-home-cache-v6', '{}')
 
   clearHouseholdCache(storage)
 
   assert.equal(storage.getItem(HOUSEHOLD_CACHE_KEY), null)
+  assert.equal(storage.getItem('futari-home-cache-v7'), null)
   assert.equal(storage.getItem('futari-home-cache-v6'), null)
 })
 

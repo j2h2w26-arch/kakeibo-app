@@ -6,9 +6,10 @@ This file is the design source of truth for the current UI. It supersedes the ea
 
 ## Product structure
 
-- After login, open on a function chooser. It contains four large choices only: お金, 買い物, やりたい, ポイント.
+- After login, open on a function chooser. It contains four large choices only: お金, 暮らし, 未来, ポイント.
+- 暮らし groups 買い物・在庫 and 家事. 未来 groups Wish and 人生ToDo/人生設計. Keep the chooser simple even as grouped features increase.
 - Do not add balances, notifications, campaigns, rankings, or other dashboard widgets to the chooser.
-- Inside a function, keep the labeled bottom navigation: 選ぶ plus the four functions.
+- Inside a function, keep the labeled bottom navigation: 選ぶ, お金, 暮らし, 未来, ポイント.
 - Settings stays a utility destination in the header and must include a visible 設定 label.
 
 ## Art direction
