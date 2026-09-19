@@ -22,6 +22,7 @@ const EMPTY_SNAPSHOT = {
   notificationSchemaReady: false,
   lifeTasks: [],
   lifeTasksSchemaReady: false,
+  appliances: [],
   chores: [],
   choreCompletions: [],
   choresSchemaReady: false,
@@ -141,6 +142,7 @@ export function useHouseholdData(enabled) {
 
     if (snapshot.choresSchemaReady) {
       channel = channel
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'household_appliances' }, queueRefresh)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'household_chores' }, queueRefresh)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'household_chore_completions' }, queueRefresh)
     }

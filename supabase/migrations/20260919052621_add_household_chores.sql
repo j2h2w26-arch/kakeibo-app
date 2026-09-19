@@ -1,5 +1,33 @@
 begin;
 
+create table public.household_appliances (
+  id bigint generated always as identity primary key,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  catalog_key text unique,
+  name text not null,
+  manufacturer text not null,
+  model_number text,
+  support_url text,
+  note text,
+  is_active boolean not null default true,
+  created_by uuid default auth.uid()
+    references public.app_members(user_id) on delete set null,
+  constraint household_appliances_name_check
+    check (char_length(btrim(name)) between 1 and 100),
+  constraint household_appliances_manufacturer_check
+    check (char_length(btrim(manufacturer)) between 1 and 100),
+  constraint household_appliances_model_number_check
+    check (model_number is null or char_length(btrim(model_number)) between 1 and 100),
+  constraint household_appliances_support_url_check
+    check (
+      support_url is null
+      or (char_length(support_url) <= 2000 and support_url ~ '^https://')
+    ),
+  constraint household_appliances_note_check
+    check (note is null or char_length(note) <= 1000)
+);
+
 create table public.household_chores (
   id bigint generated always as identity primary key,
   created_at timestamptz not null default now(),
@@ -16,8 +44,7 @@ create table public.household_chores (
   month_of_year smallint,
   next_due_on date,
   last_completed_on date,
-  appliance_name text,
-  manual_url text,
+  appliance_id bigint references public.household_appliances(id) on delete restrict,
   note text,
   is_active boolean not null default true,
   sort_order integer not null default 0,
@@ -57,13 +84,6 @@ create table public.household_chores (
       or (schedule_type = 'once' and interval_value is null and interval_unit is null
         and weekday is null and day_of_month is null and month_of_year is null)
     ),
-  constraint household_chores_appliance_name_check
-    check (appliance_name is null or char_length(btrim(appliance_name)) between 1 and 100),
-  constraint household_chores_manual_url_check
-    check (
-      manual_url is null
-      or (char_length(manual_url) <= 2000 and manual_url ~ '^https://')
-    ),
   constraint household_chores_note_check
     check (note is null or char_length(note) <= 1000),
   constraint household_chores_active_due_check
@@ -88,16 +108,29 @@ create index household_chores_due_idx
   on public.household_chores (is_active, next_due_on, sort_order);
 create index household_chores_category_idx
   on public.household_chores (category, is_active, sort_order);
+create index household_chores_appliance_idx
+  on public.household_chores (appliance_id, is_active, sort_order);
 create index household_chore_completions_history_idx
   on public.household_chore_completions (completed_on desc, completed_at desc);
 create index household_chore_completions_chore_idx
   on public.household_chore_completions (chore_id, completed_on desc);
 
 revoke all on table
+  public.household_appliances,
   public.household_chores,
   public.household_chore_completions
 from public, anon, authenticated;
 
+grant select, insert on table public.household_appliances to authenticated;
+grant update (
+  updated_at,
+  name,
+  manufacturer,
+  model_number,
+  support_url,
+  note,
+  is_active
+) on table public.household_appliances to authenticated;
 grant select, insert on table public.household_chores to authenticated;
 grant update (
   updated_at,
@@ -112,20 +145,37 @@ grant update (
   month_of_year,
   next_due_on,
   last_completed_on,
-  appliance_name,
-  manual_url,
+  appliance_id,
   note,
   is_active,
   sort_order
 ) on table public.household_chores to authenticated;
 grant select, insert on table public.household_chore_completions to authenticated;
 grant usage, select on sequence
+  public.household_appliances_id_seq,
   public.household_chores_id_seq,
   public.household_chore_completions_id_seq
 to authenticated;
 
+alter table public.household_appliances enable row level security;
 alter table public.household_chores enable row level security;
 alter table public.household_chore_completions enable row level security;
+
+create policy "Household members read appliances"
+  on public.household_appliances for select to authenticated
+  using ((select public.is_app_member()));
+
+create policy "Household members create appliances"
+  on public.household_appliances for insert to authenticated
+  with check (
+    (select public.is_app_member())
+    and created_by = (select auth.uid())
+  );
+
+create policy "Household members update appliances"
+  on public.household_appliances for update to authenticated
+  using ((select public.is_app_member()))
+  with check ((select public.is_app_member()));
 
 create policy "Household members read chores"
   on public.household_chores for select to authenticated
@@ -296,6 +346,46 @@ $$;
 revoke all on function public.complete_household_chore(bigint, date, text) from public, anon;
 grant execute on function public.complete_household_chore(bigint, date, text) to authenticated;
 
+insert into public.household_appliances (
+  catalog_key,
+  name,
+  manufacturer,
+  model_number,
+  support_url,
+  note,
+  created_by
+)
+values
+  (
+    'panasonic_cs255dfl', 'エアコン', 'Panasonic', 'CS-255DFL-W',
+    'https://panasonic.jp/housing-aircon/products/CS-255DFL/support.html',
+    '実機写真で型番確認済み', null
+  ),
+  (
+    'panasonic_nptsp1', '食器洗い乾燥機', 'Panasonic', 'NP-TSP1',
+    'https://panasonic.jp/dish/products/NP-TSP1/support.html',
+    '実機写真で型番確認済み', null
+  ),
+  (
+    'toshiba_tw127xp3', 'ドラム式洗濯乾燥機', 'TOSHIBA', 'TW-127XP3',
+    'https://www.toshiba-lifestyle.com/jp/laundries/tw-127xp3/',
+    '実機写真で型番確認済み', null
+  ),
+  (
+    'eufy_omni_c28', 'ロボット掃除機', 'eufy', 'Omni C28 / T291X',
+    'https://service.eufy.com/ca/product-description/a08e200000AO5onAAD',
+    '本体はOmni C28、ステーションはT291X。細かな頻度は仮設定', null
+  ),
+  (
+    'dyson_cordless_unknown', 'コードレス掃除機', 'Dyson', null, null,
+    '型番未確認。型番確認まではフィルターの水洗い方法を確定しない', null
+  ),
+  (
+    'dyson_purifier_unknown', '空気清浄ファン', 'Dyson', null, null,
+    '型番未確認。型番確認まではフィルターの洗浄・交換方法を確定しない', null
+  )
+on conflict (catalog_key) do nothing;
+
 insert into public.household_chores (
   catalog_key,
   title,
@@ -305,38 +395,50 @@ insert into public.household_chores (
   interval_value,
   interval_unit,
   next_due_on,
+  appliance_id,
   note,
   sort_order,
   created_by
 )
 values
-  ('toilet_weekly', 'トイレ全体を掃除', 'トイレ', 'ふたり', 'interval', 1, 'weeks', current_date + 1, null, 10, null),
-  ('bathroom_weekly', '浴室の床・壁・排水口を掃除', '浴室・洗面', 'ふたり', 'interval', 1, 'weeks', current_date + 2, null, 20, null),
-  ('floor_weekly', '床とラグを掃除', 'リビング・寝室', 'ふたり', 'interval', 1, 'weeks', current_date + 3, null, 30, null),
-  ('sheets_biweekly', 'シーツ・枕カバーを交換', 'リビング・寝室', 'ふたり', 'interval', 2, 'weeks', current_date + 4, null, 40, null),
-  ('sink_weekly', 'シンク・排水口を掃除', 'キッチン', 'ふたり', 'interval', 1, 'weeks', current_date + 5, null, 50, null),
-  ('microwave_weekly', '電子レンジ庫内を拭く', '家電', 'ふたり', 'interval', 1, 'weeks', current_date + 6, null, 60, null),
-  ('washer_monthly', '洗濯槽クリーナーを使う', '洗濯', 'ふたり', 'interval', 1, 'months', current_date + 7, '機種別の正確な頻度は取扱説明書を確認後に調整', 70, null),
-  ('fridge_monthly', '冷蔵庫の棚・野菜室を掃除', 'キッチン', 'ふたり', 'interval', 1, 'months', current_date + 8, null, 80, null),
-  ('vacuum_filter_monthly', '掃除機のフィルター・ブラシを手入れ', '家電', 'ふたり', 'interval', 1, 'months', current_date + 9, '機種別の正確な手入れ方法は取扱説明書を確認後に調整', 90, null),
-  ('bathroom_deep_monthly', '浴室排水口を分解して掃除', '浴室・洗面', 'ふたり', 'interval', 1, 'months', current_date + 10, null, 100, null),
-  ('dishwasher_monthly', '食洗機の庫内・フィルターを掃除', '家電', 'ふたり', 'interval', 1, 'months', current_date + 11, '機種別の正確な手入れ方法は取扱説明書を確認後に調整', 110, null),
-  ('vent_filter_quarterly', '室内換気口のフィルターを掃除', 'リビング・寝室', 'ふたり', 'interval', 3, 'months', current_date + 12, null, 120, null),
-  ('aircon_filter_quarterly', 'エアコンのフィルターを掃除', '家電', 'ふたり', 'interval', 3, 'months', current_date + 13, '使用頻度と取扱説明書に合わせて調整', 130, null),
-  ('range_hood_quarterly', 'レンジフード・換気扇を掃除', 'キッチン', 'ふたり', 'interval', 3, 'months', current_date + 14, null, 140, null),
-  ('windows_quarterly', '窓・窓枠・サッシを掃除', 'リビング・寝室', 'ふたり', 'interval', 3, 'months', current_date + 15, null, 150, null),
-  ('balcony_quarterly', 'ベランダ・排水口を掃除', '玄関・屋外', 'ふたり', 'interval', 3, 'months', current_date + 16, null, 160, null),
-  ('disaster_stock_halfyear', '防災備蓄・非常食の期限を確認', '防災・季節', 'ふたり', 'interval', 6, 'months', current_date + 17, null, 170, null),
-  ('fridge_back_halfyear', '冷蔵庫の背面・下のほこりを取る', '家電', 'ふたり', 'interval', 6, 'months', current_date + 18, '電源・設置条件に注意し取扱説明書を確認', 180, null),
-  ('alarm_halfyear', '火災報知器の作動を確認', '防災・季節', 'ふたり', 'interval', 6, 'months', current_date + 19, null, 190, null),
-  ('manuals_yearly', '家電の取扱説明書・保証期間を確認', '家電', 'ふたり', 'interval', 1, 'years', current_date + 20, null, 200, null)
+  ('toilet_weekly', 'トイレ全体を掃除', 'トイレ', 'ふたり', 'interval', 1, 'weeks', current_date + 1, null, null, 10, null),
+  ('bathroom_weekly', '浴室の床・壁・排水口を掃除', '浴室・洗面', 'ふたり', 'interval', 1, 'weeks', current_date + 2, null, null, 20, null),
+  ('floor_weekly', '床とラグを掃除', 'リビング・寝室', 'ふたり', 'interval', 1, 'weeks', current_date + 3, null, null, 30, null),
+  ('sheets_biweekly', 'シーツ・枕カバーを交換', 'リビング・寝室', 'ふたり', 'interval', 2, 'weeks', current_date + 4, null, null, 40, null),
+  ('sink_weekly', 'シンク・排水口を掃除', 'キッチン', 'ふたり', 'interval', 1, 'weeks', current_date + 5, null, null, 50, null),
+  ('microwave_weekly', '電子レンジ庫内を拭く', '家電', 'ふたり', 'interval', 1, 'weeks', current_date + 6, null, null, 60, null),
+  ('fridge_monthly', '冷蔵庫の棚・野菜室を掃除', 'キッチン', 'ふたり', 'interval', 1, 'months', current_date + 7, null, null, 70, null),
+  ('bathroom_deep_monthly', '浴室排水口を分解して掃除', '浴室・洗面', 'ふたり', 'interval', 1, 'months', current_date + 8, null, null, 80, null),
+  ('vent_filter_quarterly', '室内換気口のフィルターを掃除', 'リビング・寝室', 'ふたり', 'interval', 3, 'months', current_date + 9, null, null, 90, null),
+  ('range_hood_quarterly', 'レンジフード・換気扇を掃除', 'キッチン', 'ふたり', 'interval', 3, 'months', current_date + 10, null, null, 100, null),
+  ('windows_quarterly', '窓・窓枠・サッシを掃除', 'リビング・寝室', 'ふたり', 'interval', 3, 'months', current_date + 11, null, null, 110, null),
+  ('balcony_quarterly', 'ベランダ・排水口を掃除', '玄関・屋外', 'ふたり', 'interval', 3, 'months', current_date + 12, null, null, 120, null),
+  ('disaster_stock_halfyear', '防災備蓄・非常食の期限を確認', '防災・季節', 'ふたり', 'interval', 6, 'months', current_date + 13, null, null, 130, null),
+  ('fridge_back_halfyear', '冷蔵庫の背面・下のほこりを取る', '家電', 'ふたり', 'interval', 6, 'months', current_date + 14, null, '電源・設置条件に注意し取扱説明書を確認', 140, null),
+  ('alarm_halfyear', '火災報知器の作動を確認', '防災・季節', 'ふたり', 'interval', 6, 'months', current_date + 15, null, null, 150, null),
+  ('manuals_yearly', '家電の取扱説明書・保証期間を確認', '家電', 'ふたり', 'interval', 1, 'years', current_date + 16, null, null, 160, null),
+  ('panasonic_aircon_filter_biweekly', 'エアコンのフィルターを掃除', '家電', 'ふたり', 'interval', 2, 'weeks', current_date + 2, (select id from public.household_appliances where catalog_key = 'panasonic_cs255dfl'), '公式サポートを基準に設定', 210, null),
+  ('panasonic_dishwasher_filter_weekly', '食洗機の残さいフィルターを掃除', '家電', 'ふたり', 'interval', 1, 'weeks', current_date + 3, (select id from public.household_appliances where catalog_key = 'panasonic_nptsp1'), '公式のお手入れ目安は週1回', 220, null),
+  ('panasonic_dishwasher_inside_biweekly', '食洗機の庫内を洗浄', '家電', 'ふたり', 'interval', 2, 'weeks', current_date + 4, (select id from public.household_appliances where catalog_key = 'panasonic_nptsp1'), '公式のお手入れ目安は月2～3回', 230, null),
+  ('panasonic_dishwasher_drain_monthly', '食洗機の排水口カバー・パッキンを手入れ', '家電', 'ふたり', 'interval', 1, 'months', current_date + 5, (select id from public.household_appliances where catalog_key = 'panasonic_nptsp1'), '公式説明書を確認して作業する', 240, null),
+  ('toshiba_washer_60c_quarterly', '洗濯機の60℃温水槽クリーン', '洗濯', 'ふたり', 'interval', 3, 'months', current_date + 6, (select id from public.household_appliances where catalog_key = 'toshiba_tw127xp3'), '公式機能に合わせて設定', 250, null),
+  ('toshiba_washer_autodose_quarterly', '洗剤・柔軟剤の自動投入タンクと経路を手入れ', '洗濯', 'ふたり', 'interval', 3, 'months', current_date + 7, (select id from public.household_appliances where catalog_key = 'toshiba_tw127xp3'), '公式目安は2～3か月。3か月で設定', 260, null),
+  ('eufy_water_mop_tray_weekly', '水タンク・モップ・洗浄トレイを手入れ', '家電', 'ふたり', 'interval', 1, 'weeks', current_date + 1, (select id from public.household_appliances where catalog_key = 'eufy_omni_c28'), '仮頻度。使用状況と公式説明書に合わせて調整', 270, null),
+  ('eufy_brush_wheels_biweekly', 'ブラシ・車輪を手入れ', '家電', 'ふたり', 'interval', 2, 'weeks', current_date + 8, (select id from public.household_appliances where catalog_key = 'eufy_omni_c28'), '仮頻度。使用状況と公式説明書に合わせて調整', 280, null),
+  ('eufy_sensors_monthly', 'センサーと充電端子を拭く', '家電', 'ふたり', 'interval', 1, 'months', current_date + 9, (select id from public.household_appliances where catalog_key = 'eufy_omni_c28'), '仮頻度。乾いた柔らかい布を使う', 290, null),
+  ('eufy_consumables_quarterly', '消耗品の状態を確認', '家電', 'ふたり', 'interval', 3, 'months', current_date + 10, (select id from public.household_appliances where catalog_key = 'eufy_omni_c28'), '仮頻度。アプリの残量表示と使用状況も確認', 300, null),
+  ('dyson_vacuum_bin_weekly', '掃除機のクリアビンを手入れ', '家電', 'ふたり', 'interval', 1, 'weeks', current_date + 2, (select id from public.household_appliances where catalog_key = 'dyson_cordless_unknown'), '使用状況に応じて実施。型番確認後に手順を確定', 310, null),
+  ('dyson_vacuum_head_monthly', '掃除機ヘッドの絡まりを取り除く', '家電', 'ふたり', 'interval', 1, 'months', current_date + 11, (select id from public.household_appliances where catalog_key = 'dyson_cordless_unknown'), '型番確認後に公式手順へ更新', 320, null),
+  ('dyson_vacuum_filter_monthly', '掃除機フィルターの状態を確認', '家電', 'ふたり', 'interval', 1, 'months', current_date + 12, (select id from public.household_appliances where catalog_key = 'dyson_cordless_unknown'), '型番確認までは水洗い可否を確定しない', 330, null),
+  ('dyson_purifier_inlet_monthly', '空気清浄ファンの吸込口を手入れ', '家電', 'ふたり', 'interval', 1, 'months', current_date + 13, (select id from public.household_appliances where catalog_key = 'dyson_purifier_unknown'), '型番確認後に公式手順へ更新', 340, null),
+  ('dyson_purifier_filter_monthly', '空気清浄ファンのフィルター残量を確認', '家電', 'ふたり', 'interval', 1, 'months', current_date + 14, (select id from public.household_appliances where catalog_key = 'dyson_purifier_unknown'), '型番確認までは洗浄・交換方法を確定しない', 350, null)
 on conflict (catalog_key) do nothing;
 
 do $$
 declare
   table_name text;
 begin
-  foreach table_name in array array['household_chores', 'household_chore_completions']
+  foreach table_name in array array['household_appliances', 'household_chores', 'household_chore_completions']
   loop
     if not exists (
       select 1

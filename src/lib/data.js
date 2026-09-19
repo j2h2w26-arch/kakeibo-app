@@ -28,6 +28,7 @@ export async function fetchHouseholdSnapshot() {
     wishCommentsResult,
     notificationPreferencesResult,
     lifeTasksResult,
+    appliancesResult,
     choresResult,
     choreCompletionsResult,
     pointActivitiesResult,
@@ -48,6 +49,7 @@ export async function fetchHouseholdSnapshot() {
     fetchAllRows(() => supabase.from('wish_comments').select('*').order('created_at').order('id')),
     supabase.from('notification_preferences').select('*').maybeSingle(),
     fetchAllRows(() => supabase.from('life_tasks').select('*').order('created_at', { ascending: false }).order('id')),
+    fetchAllRows(() => supabase.from('household_appliances').select('*').order('manufacturer').order('name').order('id')),
     fetchAllRows(() => supabase.from('household_chores').select('*').order('sort_order').order('next_due_on').order('id')),
     fetchAllRows(() => supabase.from('household_chore_completions').select('*').order('completed_on', { ascending: false }).order('completed_at', { ascending: false }).order('id')),
     fetchAllRows(() => supabase.from('point_activities').select('*').order('sort_order').order('created_at').order('id')),
@@ -72,6 +74,7 @@ export async function fetchHouseholdSnapshot() {
     ? unwrapOptional(notificationPreferencesResult)
     : notificationPreferencesResult.data
   const lifeTasks = unwrapOptional(lifeTasksResult) || []
+  const appliances = unwrapOptional(appliancesResult) || []
   const chores = unwrapOptional(choresResult) || []
   const choreCompletions = unwrapOptional(choreCompletionsResult) || []
   const pointActivities = unwrap(pointActivitiesResult) || []
@@ -105,9 +108,10 @@ export async function fetchHouseholdSnapshot() {
     notificationSchemaReady: !notificationPreferencesResult.error,
     lifeTasks,
     lifeTasksSchemaReady: !lifeTasksResult.error,
+    appliances,
     chores,
     choreCompletions,
-    choresSchemaReady: !choresResult.error && !choreCompletionsResult.error,
+    choresSchemaReady: !appliancesResult.error && !choresResult.error && !choreCompletionsResult.error,
     pointActivities,
     pointCompletions,
     pointSources,

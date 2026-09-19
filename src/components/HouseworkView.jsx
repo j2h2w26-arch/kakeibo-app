@@ -21,8 +21,7 @@ function emptyForm(today) {
     day_of_month: '1',
     month_of_year: '1',
     next_due_on: today,
-    appliance_name: '',
-    manual_url: '',
+    appliance_id: '',
     note: '',
     is_active: true,
   }
@@ -40,8 +39,7 @@ function formFromChore(chore) {
     day_of_month: String(chore.day_of_month || 1),
     month_of_year: String(chore.month_of_year || 1),
     next_due_on: chore.next_due_on || '',
-    appliance_name: chore.appliance_name || '',
-    manual_url: chore.manual_url || '',
+    appliance_id: chore.appliance_id ? String(chore.appliance_id) : '',
     note: chore.note || '',
     is_active: chore.is_active,
   }
@@ -63,6 +61,7 @@ function DueBadge({ chore, today }) {
 }
 
 export function HouseworkView({
+  appliances,
   chores,
   completions,
   schemaReady,
@@ -84,6 +83,7 @@ export function HouseworkView({
   const activeChores = useMemo(() => sortChores(chores, today), [chores, today])
   const managedChores = useMemo(() => sortChores(chores, today, true), [chores, today])
   const choresById = useMemo(() => new Map(chores.map((chore) => [chore.id, chore])), [chores])
+  const appliancesById = useMemo(() => new Map(appliances.map((appliance) => [appliance.id, appliance])), [appliances])
 
   function resetForm() {
     setForm(emptyForm(today))
@@ -111,11 +111,6 @@ export function HouseworkView({
       setError('有効な家事には次回期限が必要です。')
       return
     }
-    if (form.manual_url && !form.manual_url.startsWith('https://')) {
-      setError('説明書URLはhttps://から始まるアドレスを入力してください。')
-      return
-    }
-
     const input = {
       title,
       category: form.category,
@@ -123,8 +118,7 @@ export function HouseworkView({
       schedule_type: form.schedule_type,
       ...scheduleFields(form),
       next_due_on: form.next_due_on || null,
-      appliance_name: form.appliance_name.trim() || null,
-      manual_url: form.manual_url.trim() || null,
+      appliance_id: form.appliance_id ? Number(form.appliance_id) : null,
       note: form.note.trim() || null,
       is_active: form.is_active,
       updated_at: new Date().toISOString(),
@@ -190,7 +184,7 @@ export function HouseworkView({
           {form.schedule_type === 'weekly' && <label><span>曜日</span><select value={form.weekday} onChange={(event) => setForm({ ...form, weekday: event.target.value })}>{WEEKDAYS.map((value, index) => <option value={index} key={value}>{value}</option>)}</select></label>}
           {form.schedule_type === 'monthly' && <label><span>毎月の日</span><input type="number" min="1" max="31" value={form.day_of_month} onChange={(event) => setForm({ ...form, day_of_month: event.target.value })} /></label>}
           {form.schedule_type === 'yearly' && <div className="form-grid chore-form-grid"><label><span>月</span><input type="number" min="1" max="12" value={form.month_of_year} onChange={(event) => setForm({ ...form, month_of_year: event.target.value })} /></label><label><span>日</span><input type="number" min="1" max="31" value={form.day_of_month} onChange={(event) => setForm({ ...form, day_of_month: event.target.value })} /></label></div>}
-          <div className="form-grid chore-form-grid"><label><span>家電名・型番（任意）</span><input type="text" maxLength="100" value={form.appliance_name} onChange={(event) => setForm({ ...form, appliance_name: event.target.value })} /></label><label><span>説明書URL（任意）</span><input type="url" maxLength="2000" placeholder="https://" value={form.manual_url} onChange={(event) => setForm({ ...form, manual_url: event.target.value })} /></label></div>
+          <label><span>家電（任意）</span><select value={form.appliance_id} onChange={(event) => setForm({ ...form, appliance_id: event.target.value })}><option value="">紐づけない</option>{appliances.filter((appliance) => appliance.is_active).map((appliance) => <option value={appliance.id} key={appliance.id}>{appliance.manufacturer} {appliance.name}{appliance.model_number ? `（${appliance.model_number}）` : '（型番未確認）'}</option>)}</select></label>
           <label><span>メモ（任意）</span><textarea rows="3" maxLength="1000" value={form.note} onChange={(event) => setForm({ ...form, note: event.target.value })} /></label>
           {error && <p className="form-error" role="alert">{error}</p>}
           <button className="primary-button" type="submit" disabled={!online || busy}>{editingId ? '変更を保存' : '追加する'}</button>
@@ -200,16 +194,19 @@ export function HouseworkView({
       {mode === 'todo' && (
         <div className="chore-list">
           {activeChores.length === 0 && <div className="empty-state"><span>✓</span><strong>有効な家事はありません</strong><p>管理から家事を追加できます。</p></div>}
-          {activeChores.map((chore) => (
+          {activeChores.map((chore) => {
+            const appliance = appliancesById.get(chore.appliance_id)
+            return (
             <article className="chore-card" key={chore.id}>
               <div className="chore-card-topline"><DueBadge chore={chore} today={today} /><span>{chore.category}・{chore.assigned_to}</span></div>
               <h3>{chore.title}</h3>
               <div className="chore-card-meta"><span>{choreScheduleLabel(chore)}</span><span>期限 {formatDate(chore.next_due_on)}</span>{chore.last_completed_on && <span>前回 {formatDate(chore.last_completed_on)}</span>}</div>
-              {chore.appliance_name && <p className="chore-appliance">家電：{chore.appliance_name}</p>}
+              {appliance && <p className="chore-appliance">家電：{appliance.manufacturer} {appliance.name}{appliance.model_number ? `（${appliance.model_number}）` : '（型番未確認）'}</p>}
               {chore.note && <p>{chore.note}</p>}
-              <div className="chore-card-actions">{chore.manual_url && <a href={chore.manual_url} target="_blank" rel="noreferrer">説明書</a>}<button type="button" disabled={!online || busy} onClick={() => complete(chore)}>今日完了</button></div>
+              <div className="chore-card-actions">{appliance?.support_url && <a href={appliance.support_url} target="_blank" rel="noreferrer">公式サポート</a>}<button type="button" disabled={!online || busy} onClick={() => complete(chore)}>今日完了</button></div>
             </article>
-          ))}
+            )
+          })}
         </div>
       )}
 
@@ -231,6 +228,13 @@ export function HouseworkView({
               <div><strong>{chore.title}</strong><span>{chore.category}・{choreScheduleLabel(chore)}</span></div>
               <button type="button" onClick={() => startEdit(chore)}>編集</button>
               <button type="button" className={chore.is_active ? 'danger-action' : ''} disabled={!online || busy} onClick={() => onUpdate(chore.id, { is_active: !chore.is_active, next_due_on: chore.next_due_on || today, updated_at: new Date().toISOString() })}>{chore.is_active ? '無効化' : '有効化'}</button>
+            </article>
+          ))}
+          <div className="section-heading"><h3>登録家電</h3><span>{appliances.filter((appliance) => appliance.is_active).length}台</span></div>
+          {appliances.map((appliance) => (
+            <article className={!appliance.is_active ? 'inactive' : ''} key={appliance.id}>
+              <div><strong>{appliance.manufacturer} {appliance.name}</strong><span>{appliance.model_number || '型番未確認'}{appliance.note ? `・${appliance.note}` : ''}</span></div>
+              {appliance.support_url && <a href={appliance.support_url} target="_blank" rel="noreferrer">公式</a>}
             </article>
           ))}
         </div>

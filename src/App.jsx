@@ -324,6 +324,7 @@ function App() {
           ),
         }}
         choreProps={{
+          appliances: snapshot.appliances,
           chores: snapshot.chores,
           completions: snapshot.choreCompletions,
           schemaReady: snapshot.choresSchemaReady,
