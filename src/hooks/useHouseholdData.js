@@ -22,6 +22,10 @@ const EMPTY_SNAPSHOT = {
   notificationSchemaReady: false,
   lifeTasks: [],
   lifeTasksSchemaReady: false,
+  appliances: [],
+  chores: [],
+  choreCompletions: [],
+  choresSchemaReady: false,
   pointActivities: [],
   pointCompletions: [],
   pointSources: [],
@@ -136,6 +140,13 @@ export function useHouseholdData(enabled) {
       channel = channel.on('postgres_changes', { event: '*', schema: 'public', table: 'life_tasks' }, queueRefresh)
     }
 
+    if (snapshot.choresSchemaReady) {
+      channel = channel
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'household_appliances' }, queueRefresh)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'household_chores' }, queueRefresh)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'household_chore_completions' }, queueRefresh)
+    }
+
     if (snapshot.pointCampaignSchemaReady) {
       for (const table of [
         'point_sources',
@@ -167,6 +178,7 @@ export function useHouseholdData(enabled) {
     realtimeRetryKey,
     snapshot.expenseSchemaReady,
     snapshot.inventorySchemaReady,
+    snapshot.choresSchemaReady,
     snapshot.lifeTasksSchemaReady,
     snapshot.notificationSchemaReady,
     snapshot.pointCampaignSchemaReady,

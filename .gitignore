@@ -10,6 +10,7 @@ lerna-debug.log*
 node_modules
 dist
 public/ocr
+supabase/.temp
 dist-ssr
 *.local
 .env

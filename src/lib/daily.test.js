@@ -65,5 +65,25 @@ test('今日のまとめは現在期間の未完了ポイ活だけを数える',
     today: '2026-08-19',
   })
 
-  assert.deepEqual(summary, { shopping: 1, expiring: 1, points: 1, wishPlans: 1 })
+  assert.deepEqual(summary, { shopping: 1, expiring: 1, points: 1, wishPlans: 1, dueChores: 0 })
+})
+
+test('今日のまとめは期限超過と今日期限の家事を数える', () => {
+  const summary = todaySummary({
+    items: [],
+    inventoryItems: [],
+    pointActivities: [],
+    pointCompletions: [],
+    wishes: [],
+    chores: [
+      { is_active: true, next_due_on: '2026-09-18' },
+      { is_active: true, next_due_on: '2026-09-19' },
+      { is_active: true, next_due_on: '2026-09-20' },
+      { is_active: false, next_due_on: '2026-09-18' },
+    ],
+    memberId: 'member-1',
+    today: '2026-09-19',
+  })
+
+  assert.equal(summary.dueChores, 2)
 })

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { HomeView } from './components/HomeView'
 import { LoanView } from './components/LoanView'
 import { LoginScreen } from './components/LoginScreen'
-import { ShoppingView } from './components/ShoppingView'
+import { LivingHubView } from './components/LivingHubView'
 import { WishHubView } from './components/WishHubView'
 import { PointActionsView } from './components/PointActionsView'
 import { SettingsView } from './components/SettingsView'
@@ -21,6 +21,8 @@ import {
   createReceiptUrl,
   createWishComment,
   createLifeTask,
+  createChore,
+  completeChore,
   recordRepayment,
   removeLoan,
   removeInventoryItem,
@@ -36,12 +38,13 @@ import {
   updatePointActivity,
   updateWish,
   updateLifeTask,
+  updateChore,
   undoPointActivityCompletion,
   setPointCampaignDecision,
   setPointServicePreference,
   syncPointCampaigns,
 } from './lib/data'
-import { messageFromError } from './lib/format'
+import { messageFromError, todayInTokyo } from './lib/format'
 import { supabase } from './lib/supabase'
 import { deriveSyncStatus } from './lib/syncStatus'
 import './App.css'
@@ -52,8 +55,8 @@ const MEMBER_CACHE_KEY = 'futari-wallet-member-v1'
 const NAV_ITEMS = [
   { id: 'home', icon: '⌂', label: '選ぶ' },
   { id: 'money', icon: '¥', label: 'お金' },
-  { id: 'shopping', icon: '✓', label: '買い物' },
-  { id: 'wishes', icon: '♡', label: 'やりたい' },
+  { id: 'shopping', icon: '✓', label: '暮らし' },
+  { id: 'wishes', icon: '♡', label: '未来' },
   { id: 'points', icon: '★', label: 'ポイント' },
 ]
 
@@ -274,50 +277,72 @@ function App() {
     )
   } else if (tab === 'shopping') {
     currentView = (
-      <ShoppingView
-        items={snapshot.items}
-        inventoryItems={snapshot.inventoryItems}
-        inventorySchemaReady={snapshot.inventorySchemaReady}
-        memberId={member.user_id}
-        online={online}
-        busy={busy}
-        onCreateMany={(inputs) => runAction(
-          () => createShoppingItems(inputs),
-          `${inputs.length}件を買い出しに追加しました`,
-        )}
-        onUpdate={(id, input) => runAction(() => updateShoppingItem(id, input), '買い出しを更新しました')}
-        onDelete={(id) => runAction(() => removeShoppingItem(id), '買い出しから削除しました')}
-        onCreateInventory={(input) => runAction(
-          () => createInventoryItem({ ...input, updated_by: member.user_id }),
-          '在庫に追加しました',
-        )}
-        onUpdateInventory={(id, input) => runAction(
-          () => updateInventoryItem(id, {
-            ...input,
-            updated_by: member.user_id,
-            updated_at: new Date().toISOString(),
-          }),
-          '在庫を更新しました',
-        )}
-        onDeleteInventory={(id) => runAction(() => removeInventoryItem(id), '在庫から削除しました')}
-        onAddInventoryToShopping={(item) => runAction(
-          () => createShoppingItem({
-            name: item.name,
-            category: item.category,
-            is_purchased: false,
-            purchased_at: null,
-          }),
-          '買うものに追加しました',
-        )}
-        onReplenishInventory={(item) => runAction(
-          () => updateInventoryItem(item.id, {
-            status: 'enough',
-            quantity: item.quantity === null ? null : Number(item.quantity) + 1,
-            updated_by: member.user_id,
-            updated_at: new Date().toISOString(),
-          }),
-          '在庫を補充しました',
-        )}
+      <LivingHubView
+        shoppingProps={{
+          items: snapshot.items,
+          inventoryItems: snapshot.inventoryItems,
+          inventorySchemaReady: snapshot.inventorySchemaReady,
+          memberId: member.user_id,
+          online,
+          busy,
+          onCreateMany: (inputs) => runAction(
+            () => createShoppingItems(inputs),
+            `${inputs.length}件を買い出しに追加しました`,
+          ),
+          onUpdate: (id, input) => runAction(() => updateShoppingItem(id, input), '買い出しを更新しました'),
+          onDelete: (id) => runAction(() => removeShoppingItem(id), '買い出しから削除しました'),
+          onCreateInventory: (input) => runAction(
+            () => createInventoryItem({ ...input, updated_by: member.user_id }),
+            '在庫に追加しました',
+          ),
+          onUpdateInventory: (id, input) => runAction(
+            () => updateInventoryItem(id, {
+              ...input,
+              updated_by: member.user_id,
+              updated_at: new Date().toISOString(),
+            }),
+            '在庫を更新しました',
+          ),
+          onDeleteInventory: (id) => runAction(() => removeInventoryItem(id), '在庫から削除しました'),
+          onAddInventoryToShopping: (item) => runAction(
+            () => createShoppingItem({
+              name: item.name,
+              category: item.category,
+              is_purchased: false,
+              purchased_at: null,
+            }),
+            '買うものに追加しました',
+          ),
+          onReplenishInventory: (item) => runAction(
+            () => updateInventoryItem(item.id, {
+              status: 'enough',
+              quantity: item.quantity === null ? null : Number(item.quantity) + 1,
+              updated_by: member.user_id,
+              updated_at: new Date().toISOString(),
+            }),
+            '在庫を補充しました',
+          ),
+        }}
+        choreProps={{
+          appliances: snapshot.appliances,
+          chores: snapshot.chores,
+          completions: snapshot.choreCompletions,
+          schemaReady: snapshot.choresSchemaReady,
+          memberId: member.user_id,
+          memberName: member.display_name,
+          today: todayInTokyo(),
+          online,
+          busy,
+          onCreate: (input) => runAction(
+            () => createChore({ ...input, created_by: member.user_id }),
+            '家事を追加しました',
+          ),
+          onUpdate: (id, input) => runAction(() => updateChore(id, input), '家事を更新しました'),
+          onComplete: (id, completedOn) => runAction(
+            () => completeChore(id, completedOn),
+            '完了しました。次回期限も更新しました',
+          ),
+        }}
       />
     )
   } else if (tab === 'wishes') {

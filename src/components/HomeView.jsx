@@ -9,14 +9,14 @@ const MODULES = [
   },
   {
     id: 'shopping',
-    title: '買い物',
-    description: '買うもの・家の在庫',
+    title: '暮らし',
+    description: '買い物・在庫・家事',
     tone: 'cyan',
   },
   {
     id: 'wishes',
-    title: 'やりたい',
-    description: '欲しいもの・人生ToDo',
+    title: '未来',
+    description: 'Wish・人生ToDo',
     tone: 'rose',
   },
   {
