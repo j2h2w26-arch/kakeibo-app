@@ -28,6 +28,10 @@ export async function fetchHouseholdSnapshot() {
     wishCommentsResult,
     notificationPreferencesResult,
     lifeTasksResult,
+    lifeGoalsResult,
+    lifeGoalRoutesResult,
+    lifeGoalMilestonesResult,
+    lifeGoalTaskLinksResult,
     appliancesResult,
     choresResult,
     choreCompletionsResult,
@@ -49,6 +53,10 @@ export async function fetchHouseholdSnapshot() {
     fetchAllRows(() => supabase.from('wish_comments').select('*').order('created_at').order('id')),
     supabase.from('notification_preferences').select('*').maybeSingle(),
     fetchAllRows(() => supabase.from('life_tasks').select('*').order('created_at', { ascending: false }).order('id')),
+    fetchAllRows(() => supabase.from('life_goals').select('*').order('created_at').order('id')),
+    fetchAllRows(() => supabase.from('life_goal_routes').select('*').order('sort_order').order('id')),
+    fetchAllRows(() => supabase.from('life_goal_milestones').select('*').order('sort_order').order('id')),
+    fetchAllRows(() => supabase.from('life_goal_task_links').select('*').order('created_at').order('goal_id').order('task_id')),
     fetchAllRows(() => supabase.from('household_appliances').select('*').order('manufacturer').order('name').order('id')),
     fetchAllRows(() => supabase.from('household_chores').select('*').order('sort_order').order('next_due_on').order('id')),
     fetchAllRows(() => supabase.from('household_chore_completions').select('*').order('completed_on', { ascending: false }).order('completed_at', { ascending: false }).order('id')),
@@ -74,6 +82,10 @@ export async function fetchHouseholdSnapshot() {
     ? unwrapOptional(notificationPreferencesResult)
     : notificationPreferencesResult.data
   const lifeTasks = unwrapOptional(lifeTasksResult) || []
+  const lifeGoals = unwrapOptional(lifeGoalsResult) || []
+  const lifeGoalRoutes = unwrapOptional(lifeGoalRoutesResult) || []
+  const lifeGoalMilestones = unwrapOptional(lifeGoalMilestonesResult) || []
+  const lifeGoalTaskLinks = unwrapOptional(lifeGoalTaskLinksResult) || []
   const appliances = unwrapOptional(appliancesResult) || []
   const chores = unwrapOptional(choresResult) || []
   const choreCompletions = unwrapOptional(choreCompletionsResult) || []
@@ -108,6 +120,16 @@ export async function fetchHouseholdSnapshot() {
     notificationSchemaReady: !notificationPreferencesResult.error,
     lifeTasks,
     lifeTasksSchemaReady: !lifeTasksResult.error,
+    lifeGoals,
+    lifeGoalRoutes,
+    lifeGoalMilestones,
+    lifeGoalTaskLinks,
+    lifePlanningSchemaReady: [
+      lifeGoalsResult,
+      lifeGoalRoutesResult,
+      lifeGoalMilestonesResult,
+      lifeGoalTaskLinksResult,
+    ].every((result) => !result.error),
     appliances,
     chores,
     choreCompletions,
@@ -262,6 +284,38 @@ export async function updateLifeTask(id, input) {
 
 export async function removeLifeTask(id) {
   unwrap(await supabase.from('life_tasks').delete().eq('id', id))
+}
+
+export async function createLifeGoal(input) {
+  unwrap(await supabase.from('life_goals').insert([input]))
+}
+
+export async function updateLifeGoal(id, input) {
+  unwrap(await supabase.from('life_goals').update(input).eq('id', id))
+}
+
+export async function createLifeGoalRoute(input) {
+  unwrap(await supabase.from('life_goal_routes').insert([input]))
+}
+
+export async function updateLifeGoalRoute(id, input) {
+  unwrap(await supabase.from('life_goal_routes').update(input).eq('id', id))
+}
+
+export async function createLifeGoalMilestone(input) {
+  unwrap(await supabase.from('life_goal_milestones').insert([input]))
+}
+
+export async function updateLifeGoalMilestone(id, input) {
+  unwrap(await supabase.from('life_goal_milestones').update(input).eq('id', id))
+}
+
+export async function linkLifeTaskToGoal(input) {
+  unwrap(await supabase.from('life_goal_task_links').insert([input]))
+}
+
+export async function unlinkLifeTaskFromGoal(goalId, taskId) {
+  unwrap(await supabase.from('life_goal_task_links').delete().eq('goal_id', goalId).eq('task_id', taskId))
 }
 
 export async function createChore(input) {

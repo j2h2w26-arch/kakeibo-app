@@ -21,6 +21,14 @@ import {
   createReceiptUrl,
   createWishComment,
   createLifeTask,
+  createLifeGoal,
+  updateLifeGoal,
+  createLifeGoalRoute,
+  updateLifeGoalRoute,
+  createLifeGoalMilestone,
+  updateLifeGoalMilestone,
+  linkLifeTaskToGoal,
+  unlinkLifeTaskFromGoal,
   createChore,
   completeChore,
   recordRepayment,
@@ -350,6 +358,7 @@ function App() {
       <WishHubView
         wishes={snapshot.wishes}
         lifeTasks={snapshot.lifeTasks}
+        lifeGoals={snapshot.lifeGoals}
         wishProps={{
           comments: snapshot.wishComments,
           memberId: member.user_id,
@@ -383,6 +392,40 @@ function App() {
           ),
           onUpdate: (id, input) => runAction(() => updateLifeTask(id, input), '人生ToDoを更新しました'),
           onDelete: (id) => runAction(() => removeLifeTask(id), '人生ToDoを削除しました'),
+        }}
+        lifePlanningProps={{
+          routes: snapshot.lifeGoalRoutes,
+          milestones: snapshot.lifeGoalMilestones,
+          taskLinks: snapshot.lifeGoalTaskLinks,
+          schemaReady: snapshot.lifePlanningSchemaReady,
+          online,
+          busy,
+          onCreateGoal: (input) => runAction(
+            () => createLifeGoal({ ...input, created_by: member.user_id }),
+            '人生の目標を追加しました',
+          ),
+          onUpdateGoal: (id, input) => runAction(() => updateLifeGoal(id, input), '目標を更新しました'),
+          onCreateRoute: (input) => runAction(
+            () => createLifeGoalRoute({ ...input, created_by: member.user_id }),
+            '実現ルートを追加しました',
+          ),
+          onUpdateRoute: (id, input) => runAction(() => updateLifeGoalRoute(id, input), 'ルートを更新しました'),
+          onCreateMilestone: (input) => runAction(
+            () => createLifeGoalMilestone({ ...input, created_by: member.user_id }),
+            'マイルストーンを追加しました',
+          ),
+          onUpdateMilestone: (id, input) => runAction(
+            () => updateLifeGoalMilestone(id, input),
+            'マイルストーンを更新しました',
+          ),
+          onLinkTask: (goalId, taskId) => runAction(
+            () => linkLifeTaskToGoal({ goal_id: goalId, task_id: taskId, created_by: member.user_id }),
+            'ToDoを目標に紐づけました',
+          ),
+          onUnlinkTask: (goalId, taskId) => runAction(
+            () => unlinkLifeTaskFromGoal(goalId, taskId),
+            'ToDoの紐づけを外しました',
+          ),
         }}
       />
     )

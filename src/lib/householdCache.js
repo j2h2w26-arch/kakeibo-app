@@ -1,7 +1,7 @@
-export const HOUSEHOLD_CACHE_KEY = 'futari-home-cache-v9'
+export const HOUSEHOLD_CACHE_KEY = 'futari-home-cache-v10'
 export const HOUSEHOLD_CACHE_TTL_MS = 24 * 60 * 60 * 1000
 
-const LEGACY_CACHE_KEYS = ['futari-home-cache-v8', 'futari-home-cache-v7', 'futari-home-cache-v6']
+const LEGACY_CACHE_KEYS = ['futari-home-cache-v9', 'futari-home-cache-v8', 'futari-home-cache-v7', 'futari-home-cache-v6']
 
 function availableStorage(storage) {
   return storage || globalThis.localStorage
