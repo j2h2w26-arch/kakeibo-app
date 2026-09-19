@@ -1,5 +1,11 @@
 import { useMemo, useState } from 'react'
-import { choreCounts, choreDueState, choreScheduleLabel, sortChores } from '../lib/chores'
+import {
+  choreCounts,
+  choreDueState,
+  choreScheduleLabel,
+  filterManagedChores,
+  sortChores,
+} from '../lib/chores'
 import { formatDate } from '../lib/format'
 
 const CATEGORIES = [
@@ -79,11 +85,21 @@ export function HouseworkView({
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState(() => emptyForm(today))
   const [error, setError] = useState('')
+  const [manageQuery, setManageQuery] = useState('')
+  const [manageCategory, setManageCategory] = useState('all')
+  const [manageStatus, setManageStatus] = useState('all')
   const counts = useMemo(() => choreCounts(chores, today), [chores, today])
   const activeChores = useMemo(() => sortChores(chores, today), [chores, today])
   const managedChores = useMemo(() => sortChores(chores, today, true), [chores, today])
   const choresById = useMemo(() => new Map(chores.map((chore) => [chore.id, chore])), [chores])
   const appliancesById = useMemo(() => new Map(appliances.map((appliance) => [appliance.id, appliance])), [appliances])
+  const filteredManagedChores = useMemo(() => filterManagedChores(managedChores, {
+    query: manageQuery,
+    category: manageCategory,
+    status: manageStatus,
+    appliancesById,
+  }), [appliancesById, manageCategory, manageQuery, manageStatus, managedChores])
+  const hasManageFilters = Boolean(manageQuery || manageCategory !== 'all' || manageStatus !== 'all')
 
   function resetForm() {
     setForm(emptyForm(today))
@@ -223,7 +239,14 @@ export function HouseworkView({
       {mode === 'manage' && (
         <div className="chore-manage-list">
           <div className="section-heading"><h3>家事の管理</h3><span>有効 {counts.active}件・無効 {counts.inactive}件</span></div>
-          {managedChores.map((chore) => (
+          <div className="chore-manage-filters">
+            <label className="chore-search-field"><span>家事を検索</span><input type="search" value={manageQuery} placeholder="家事名・家電名・型番" onChange={(event) => setManageQuery(event.target.value)} /></label>
+            <label><span>カテゴリー</span><select value={manageCategory} onChange={(event) => setManageCategory(event.target.value)}><option value="all">すべて</option>{CATEGORIES.map((value) => <option value={value} key={value}>{value}</option>)}</select></label>
+            <label><span>状態</span><select value={manageStatus} onChange={(event) => setManageStatus(event.target.value)}><option value="all">すべて</option><option value="active">有効のみ</option><option value="inactive">無効のみ</option></select></label>
+            <div className="chore-filter-result" role="status"><span>{filteredManagedChores.length}件を表示</span>{hasManageFilters && <button type="button" onClick={() => { setManageQuery(''); setManageCategory('all'); setManageStatus('all') }}>絞り込みをクリア</button>}</div>
+          </div>
+          {filteredManagedChores.length === 0 && <div className="empty-state"><span>⌕</span><strong>条件に合う家事がありません</strong><p>検索語やカテゴリーを変えてみてください。</p></div>}
+          {filteredManagedChores.map((chore) => (
             <article className={!chore.is_active ? 'inactive' : ''} key={chore.id}>
               <div><strong>{chore.title}</strong><span>{chore.category}・{choreScheduleLabel(chore)}</span></div>
               <button type="button" onClick={() => startEdit(chore)}>編集</button>

@@ -137,3 +137,37 @@ export function sortChores(chores, today, includeInactive = false) {
       || String(left.title).localeCompare(String(right.title), 'ja')
   })
 }
+
+function normalizeSearchText(value) {
+  return String(value || '').normalize('NFKC').toLocaleLowerCase('ja')
+}
+
+export function filterManagedChores(
+  chores,
+  {
+    query = '',
+    category = 'all',
+    status = 'all',
+    appliancesById = new Map(),
+  } = {},
+) {
+  const needle = normalizeSearchText(query).trim()
+  return chores.filter((chore) => {
+    if (category !== 'all' && chore.category !== category) return false
+    if (status === 'active' && !chore.is_active) return false
+    if (status === 'inactive' && chore.is_active) return false
+    if (!needle) return true
+
+    const appliance = appliancesById.get(chore.appliance_id)
+    const searchableText = [
+      chore.title,
+      chore.category,
+      chore.assigned_to,
+      chore.note,
+      appliance?.manufacturer,
+      appliance?.name,
+      appliance?.model_number,
+    ].map(normalizeSearchText).join(' ')
+    return searchableText.includes(needle)
+  })
+}

@@ -4498,6 +4498,55 @@ input::placeholder, textarea::placeholder { color: #a5aabe !important; }
 .chore-form { margin-bottom: 20px; }
 .chore-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
+.chore-manage-filters {
+  padding: 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) repeat(2, minmax(130px, 0.7fr));
+  gap: 10px;
+  border: 1px solid #cfd8cc;
+  border-radius: 18px;
+  background: #f5f7f2;
+}
+
+.chore-manage-filters label {
+  display: grid;
+  gap: 6px;
+}
+
+.chore-manage-filters label > span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.chore-manage-filters input,
+.chore-manage-filters select {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 1px solid #bbc9b8;
+  border-radius: 12px;
+  color: var(--text);
+  background: #fff;
+}
+
+.chore-filter-result {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.chore-filter-result button {
+  min-height: 38px;
+  padding: 7px 11px;
+  border-color: #bbc9b8;
+  background: #fff;
+}
+
 .chore-list,
 .chore-history,
 .chore-manage-list {
@@ -4612,6 +4661,8 @@ input::placeholder, textarea::placeholder { color: #a5aabe !important; }
 
 @media (max-width: 560px) {
   .chore-form-grid { grid-template-columns: 1fr; }
+  .chore-manage-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .chore-search-field { grid-column: 1 / -1; }
   .chore-summary { padding: 8px; gap: 5px; }
   .chore-summary > div { min-height: 68px; padding: 8px; }
   .chore-summary strong { font-size: 21px; }
