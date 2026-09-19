@@ -22,6 +22,11 @@ const EMPTY_SNAPSHOT = {
   notificationSchemaReady: false,
   lifeTasks: [],
   lifeTasksSchemaReady: false,
+  lifeGoals: [],
+  lifeGoalRoutes: [],
+  lifeGoalMilestones: [],
+  lifeGoalTaskLinks: [],
+  lifePlanningSchemaReady: false,
   appliances: [],
   chores: [],
   choreCompletions: [],
@@ -140,6 +145,12 @@ export function useHouseholdData(enabled) {
       channel = channel.on('postgres_changes', { event: '*', schema: 'public', table: 'life_tasks' }, queueRefresh)
     }
 
+    if (snapshot.lifePlanningSchemaReady) {
+      for (const table of ['life_goals', 'life_goal_routes', 'life_goal_milestones', 'life_goal_task_links']) {
+        channel = channel.on('postgres_changes', { event: '*', schema: 'public', table }, queueRefresh)
+      }
+    }
+
     if (snapshot.choresSchemaReady) {
       channel = channel
         .on('postgres_changes', { event: '*', schema: 'public', table: 'household_appliances' }, queueRefresh)
@@ -180,6 +191,7 @@ export function useHouseholdData(enabled) {
     snapshot.inventorySchemaReady,
     snapshot.choresSchemaReady,
     snapshot.lifeTasksSchemaReady,
+    snapshot.lifePlanningSchemaReady,
     snapshot.notificationSchemaReady,
     snapshot.pointCampaignSchemaReady,
     snapshot.wishConsultationSchemaReady,

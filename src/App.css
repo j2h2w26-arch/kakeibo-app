@@ -4670,3 +4670,184 @@ input::placeholder, textarea::placeholder { color: #a5aabe !important; }
   .chore-manage-list article > div { grid-column: 1 / -1; }
   .chore-manage-list article > button { width: 100%; }
 }
+
+/* Life planning map */
+.wish-hub-tabs {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.wish-hub-tabs button {
+  grid-template-columns: auto minmax(0, 1fr);
+  min-width: 0;
+  padding: 8px 9px;
+}
+
+.wish-hub-tabs button strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wish-hub-tabs button small {
+  grid-column: 2;
+  justify-self: start;
+}
+
+.wish-hub-tabs button:nth-child(1).active,
+.wish-hub-tabs button:nth-child(2).active {
+  border-color: #a9c3a4;
+  color: var(--shopping-ink);
+  background: var(--shopping-soft);
+}
+
+.wish-hub-tabs button:nth-child(3).active {
+  border-color: #bdb0d0;
+  color: var(--wishes-ink);
+  background: var(--wishes-soft);
+}
+
+.life-planning-heading { margin-bottom: 16px; }
+
+.life-goal-add-button,
+.life-goal-submit {
+  color: #fff;
+  background: var(--shopping-ink);
+  box-shadow: 0 8px 20px rgba(70, 99, 67, 0.2);
+}
+
+.life-goal-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 16px;
+  border: 1px solid #bfd0b9;
+  border-radius: 20px;
+  color: var(--shopping-ink);
+  background: var(--shopping-soft);
+  box-shadow: 0 10px 25px rgba(70, 99, 67, 0.09);
+}
+
+.life-goal-summary > div {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.life-goal-summary span { font-size: 11px; }
+.life-goal-summary strong { font-size: 22px; }
+.life-goal-summary strong small { margin-left: 3px; font-size: 10px; }
+.life-goal-summary > p { grid-column: 1 / -1; margin: 3px 2px 0; font-size: 12px; line-height: 1.65; }
+
+.life-goal-form { margin-bottom: 18px; }
+.life-goal-form-grid { grid-template-columns: 1fr 1fr; }
+.life-goal-form textarea { resize: vertical; }
+
+.life-goal-list {
+  display: grid;
+  gap: 13px;
+}
+
+.life-goal-card {
+  content-visibility: auto;
+  contain-intrinsic-size: 260px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--shadow);
+}
+
+.life-goal-card-main {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 7px 12px;
+  width: 100%;
+  padding: 17px;
+  border: 0;
+  color: var(--text);
+  background: transparent;
+  text-align: left;
+}
+
+.life-goal-card-main > strong { grid-column: 1 / -1; font-size: 18px; line-height: 1.45; }
+.life-goal-category, .life-goal-status, .life-goal-card-main > small { color: var(--muted); font-size: 12px; }
+.life-goal-status { justify-self: end; }
+.life-goal-progress { grid-column: 1 / -1; height: 7px; overflow: hidden; border-radius: 999px; background: #e7ebe5; }
+.life-goal-progress i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #6f8f68, #c0954a); transition: width 320ms ease; }
+.life-goal-card-main > small { grid-column: 1 / -1; }
+
+.life-goal-detail {
+  display: grid;
+  gap: 14px;
+  padding: 0 17px 17px;
+  border-top: 1px solid var(--line);
+}
+
+.life-goal-vision { margin: 14px 0 0; color: var(--muted); line-height: 1.7; }
+.life-goal-target { margin: -5px 0 0; color: var(--shopping-ink); font-size: 12px; font-weight: 700; }
+.life-goal-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.life-goal-actions button, .goal-add-detail, .goal-task-links button, .goal-task-link-form button, .goal-inline-form button {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #a9c3a4;
+  border-radius: 11px;
+  color: var(--shopping-ink);
+  background: var(--shopping-soft);
+}
+
+.goal-detail-section {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fafbf8;
+}
+
+.goal-detail-heading { display: grid; gap: 3px; }
+.goal-detail-heading h3 { margin: 0; font-size: 15px; }
+.goal-detail-heading span, .goal-detail-empty { color: var(--muted); font-size: 11px; }
+
+.goal-route-list, .goal-milestone-list, .goal-task-links { display: grid; gap: 8px; }
+.goal-route-row, .goal-milestone-row, .goal-task-links > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.goal-route-row > div, .goal-milestone-row > div, .goal-task-links span { display: grid; gap: 3px; }
+.goal-route-row small, .goal-milestone-row small, .goal-task-links small { color: var(--muted); font-size: 11px; }
+.goal-route-row select, .goal-milestone-row select { max-width: 104px; min-height: 38px; }
+.goal-milestone-row { grid-template-columns: auto minmax(0, 1fr) auto; }
+.goal-milestone-row > span { display: grid; place-items: center; width: 27px; height: 27px; border-radius: 50%; color: var(--shopping-ink); background: var(--shopping-soft); }
+.goal-milestone-row.is-complete strong, .goal-task-links .is-complete { text-decoration: line-through; opacity: 0.65; }
+
+.goal-inline-form { display: grid; gap: 8px; }
+.goal-inline-form > div:last-child { display: flex; justify-content: flex-end; gap: 8px; }
+.goal-inline-grid, .goal-task-link-form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.goal-task-link-form { grid-template-columns: minmax(0, 1fr) auto; }
+.goal-task-link-form select { min-width: 0; }
+.goal-detail-empty { margin: 0; line-height: 1.6; }
+
+@media (max-width: 560px) {
+  .wish-hub-tabs { gap: 4px; padding: 4px; }
+  .wish-hub-tabs button { grid-template-columns: 1fr; justify-items: center; gap: 3px; padding: 7px 4px; text-align: center; }
+  .wish-hub-tabs button small { grid-column: 1; justify-self: center; }
+  .wish-hub-tabs button strong { font-size: 10px; }
+  .life-goal-summary { padding: 9px; gap: 5px; }
+  .life-goal-summary > div { padding: 8px; }
+  .life-goal-summary strong { font-size: 20px; }
+  .life-goal-form-grid, .goal-inline-grid { grid-template-columns: 1fr; }
+  .goal-route-row, .goal-milestone-row { grid-template-columns: 1fr; }
+  .goal-milestone-row > span { display: none; }
+  .goal-route-row select, .goal-milestone-row select { max-width: none; width: 100%; }
+}
