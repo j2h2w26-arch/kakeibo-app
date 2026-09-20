@@ -349,14 +349,14 @@ export function WishView({
             )}
             <div className="wish-actions">
               {!wish.is_completed && (wish.wish_type || '買いたい') === '買いたい' && (
-                <button type="button" disabled={!online || busy} onClick={() => onAddToShopping(wish)}>
+                <button className="wish-shopping-action" type="button" disabled={!online || busy} onClick={() => onAddToShopping(wish)}>
                   買い物に追加
                 </button>
               )}
-              <button type="button" disabled={!online || busy} onClick={() => toggleWish(wish)}>
+              <button className="wish-complete-action" type="button" disabled={!online || busy} onClick={() => toggleWish(wish)}>
                 {wish.is_completed ? '未完了に戻す' : '叶った！'}
               </button>
-              <button type="button" onClick={() => startEdit(wish)}>編集</button>
+              <button className="wish-edit-action" type="button" onClick={() => startEdit(wish)}>編集</button>
               <button
                 className="danger-action"
                 type="button"
