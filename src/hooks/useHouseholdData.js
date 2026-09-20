@@ -26,6 +26,9 @@ const EMPTY_SNAPSHOT = {
   lifeGoalRoutes: [],
   lifeGoalMilestones: [],
   lifeGoalTaskLinks: [],
+  lifeGoalPhases: [],
+  lifeGoalRelations: [],
+  lifeWorkspaceSchemaReady: false,
   lifePlanningSchemaReady: false,
   appliances: [],
   chores: [],
@@ -146,7 +149,7 @@ export function useHouseholdData(enabled) {
     }
 
     if (snapshot.lifePlanningSchemaReady) {
-      for (const table of ['life_goals', 'life_goal_routes', 'life_goal_milestones', 'life_goal_task_links']) {
+      for (const table of ['life_goals', 'life_goal_routes', 'life_goal_milestones', 'life_goal_task_links', 'life_goal_phases', 'life_goal_relations']) {
         channel = channel.on('postgres_changes', { event: '*', schema: 'public', table }, queueRefresh)
       }
     }

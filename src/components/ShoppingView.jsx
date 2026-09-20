@@ -253,7 +253,7 @@ export function ShoppingView({
             </div>
           </div>
 
-          <details className="purchased-section" defaultOpen={purchased.length > 0 && pending.length === 0}>
+          <details className="purchased-section" open={purchased.length > 0 && pending.length === 0}>
             <summary>
               <span>購入済み</span>
               <b>{purchased.length}件</b>

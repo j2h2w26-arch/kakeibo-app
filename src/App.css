@@ -45,7 +45,7 @@
 }
 
 .app-shell {
-  width: min(100%, 720px);
+  width: min(100%, 1800px);
   min-height: 100dvh;
   margin: 0 auto;
   padding-bottom: calc(104px + env(safe-area-inset-bottom));
@@ -964,6 +964,7 @@
 .card-list,
 .shopping-list {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
 }
 
@@ -1566,6 +1567,7 @@
 
 .shopping-item {
   display: flex;
+  min-width: 0;
   align-items: center;
   min-height: 66px;
   padding: 12px 13px;
@@ -3618,6 +3620,20 @@ input::placeholder, textarea::placeholder { color: #a5aabe !important; }
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Tablet / desktop shell: same navigation and data at every size. */
+@media (min-width: 900px) {
+  .app-content { padding-left: 28px; padding-right: 28px; }
+  .app-content .view:not(.life-planning-view) { max-width: 1200px; margin-inline: auto; }
+  .function-chooser-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .app-content .view:not(.life-planning-view) .panel-form { max-width: 760px; margin-inline: auto; }
+  .app-content :is(.shopping-list, .wish-list, .points-list, .campaign-list, .card-list, .life-task-list) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+}
+@media (min-width: 1200px) {
+  .app-shell:not(.theme-home):not(.theme-settings) { padding-left: 112px; padding-bottom: 28px; }
+  .app-shell .bottom-nav { position: fixed; left: max(12px, calc((100vw - 1800px) / 2 + 12px)); right: auto; margin: 0; top: 115px; bottom: auto; width: 96px; max-width: 96px; display: flex; flex-direction: column; padding: 8px; transform: none; border-radius: 20px; }
+  .app-shell .bottom-nav button { width: 100%; min-height: 76px; }
 }
 
 /* Warm Home refresh — 2026-09-14. See docs/ui-design.md. */
