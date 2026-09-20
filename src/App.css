@@ -472,7 +472,7 @@
 
 .function-chooser-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 13px;
 }
 
@@ -4500,7 +4500,7 @@ input::placeholder, textarea::placeholder { color: #a5aabe !important; }
   margin: 0 auto 18px;
   padding: 5px;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 5px;
   border: 1px solid var(--line);
   border-radius: 18px;

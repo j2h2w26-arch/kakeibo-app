@@ -10,7 +10,7 @@ const MODULES = [
   {
     id: 'shopping',
     title: '暮らし',
-    description: '買い物・在庫・家事',
+    description: '買い物・在庫・家事・レシピ',
     tone: 'cyan',
   },
   {
