@@ -5,8 +5,8 @@
   --surface-soft: rgba(255, 255, 255, 0.82);
   --line: #d8ddd4;
   --text: #292f2c;
-  --muted: #626a63;
-  --dim: #6d756e;
+  --muted: #59615a;
+  --dim: #5d655e;
   --primary: #a84435;
   --primary-strong: #87392e;
   --secondary: #466343;
@@ -5022,4 +5022,250 @@ input::placeholder, textarea::placeholder { color: #a5aabe !important; }
   box-shadow: none;
   cursor: not-allowed;
   opacity: 1;
+}
+
+/* App-wide light-theme contrast audit — remove legacy neon foregrounds. */
+.home-stats .status-copy,
+.preview-roadmap > span,
+.preview-roadmap li::before,
+.wish-card > a,
+.wish-discussion summary,
+.password-field button {
+  color: var(--secondary);
+}
+
+.preview-icon {
+  border-color: #a9c3a4;
+  color: var(--secondary);
+  background: var(--shopping-soft);
+}
+
+.preview-roadmap li,
+.wish-meta strong,
+.wish-comment p,
+.campaign-step-preview {
+  color: var(--text);
+}
+
+.balance-card p {
+  color: var(--money-ink);
+}
+
+.wish-summary > strong,
+.wish-owner-filter button.active small {
+  color: var(--wishes-ink);
+}
+
+.points-summary strong {
+  color: var(--points-ink);
+}
+
+.reminder-settings-toggle b {
+  color: var(--secondary);
+}
+
+.settings-sign-out,
+.inventory-audit button,
+.expense-card-actions .danger-action,
+.wish-comment .danger-action {
+  border-color: #dfb7bd;
+  color: #8d2635 !important;
+  background: #fff5f6;
+}
+
+.inventory-status-choice button.active.status-low,
+.inventory-status-buttons button.active.status-low {
+  border-color: #d9c98f;
+  color: #684f14;
+  background: #fff8df;
+}
+
+.inventory-status-choice button.active.status-out,
+.inventory-status-buttons button.active.status-out {
+  border-color: #e2b8c0;
+  color: #782433;
+  background: #fff5f6;
+}
+
+.wish-comment {
+  border: 1px solid var(--line);
+  background: #fafbf8;
+}
+
+.wish-comment span {
+  color: var(--wishes-ink);
+}
+
+.wish-comment-form button {
+  color: #fff;
+  background: var(--wishes-ink);
+}
+
+.points-sync-status > span,
+.campaign-section-heading small,
+.campaign-card-topline span,
+.campaign-card-topline b,
+.campaign-tags span,
+.point-card-topline span,
+.point-card .point-deadline,
+.point-official-link {
+  color: var(--points-ink);
+}
+
+.points-sync-status > span,
+.campaign-card-topline span,
+.campaign-tags span,
+.point-card-topline span,
+.point-official-link {
+  border-color: #d9c98f;
+  background: var(--points-soft);
+}
+
+.campaign-card-topline b,
+.campaign-tags span {
+  color: var(--muted);
+  background: #eef0ec;
+}
+
+.campaign-actions button:first-of-type,
+.point-actions button:first-child {
+  color: #513c0f;
+  background: var(--points-soft);
+  border-color: #d9c98f;
+}
+
+.campaign-joined,
+.point-actions button.completed,
+.points-history article > span {
+  color: var(--success);
+  background: #e5f2e9;
+}
+
+.life-task-card {
+  --life-task-color: #59615a;
+}
+
+.life-task-card.priority-高 { --life-task-color: #8d2635; }
+.life-task-card.priority-中 { --life-task-color: #684f14; }
+.life-task-card.priority-低 { --life-task-color: #31543b; }
+
+.life-task-card-topline span,
+.life-task-status-actions button.active {
+  border-color: #a9c3a4;
+  color: var(--shopping-ink);
+  background: var(--shopping-soft);
+}
+
+.life-task-card-topline b {
+  color: var(--life-task-color);
+  background: color-mix(in srgb, var(--life-task-color) 10%, #fff);
+}
+
+.loading-dots span {
+  background: var(--secondary);
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible {
+  outline-color: #527b4c;
+}
+
+/* Inventory quantity control: make the two actions and current value explicit. */
+.inventory-card-bottom {
+  align-items: stretch;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.inventory-stepper {
+  display: grid;
+  flex: 1 1 260px;
+  grid-template-columns: minmax(74px, 1fr) minmax(88px, auto) minmax(74px, 1fr);
+  gap: 0;
+  min-width: 0;
+  min-height: 58px;
+  overflow: hidden;
+  border: 1px solid #a9bba6;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.inventory-stepper button {
+  display: flex;
+  width: auto;
+  height: auto;
+  min-height: 58px;
+  padding: 7px 8px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 0;
+  color: #31543b;
+  background: #edf4e8;
+  font: inherit;
+  cursor: pointer;
+}
+
+.inventory-stepper button:first-child {
+  border-right: 1px solid #c8d3c5;
+}
+
+.inventory-stepper button:last-child {
+  border-left: 1px solid #c8d3c5;
+}
+
+.inventory-stepper button > b {
+  font-size: 21px;
+  line-height: 1;
+}
+
+.inventory-stepper button > span {
+  color: inherit;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.inventory-stepper > strong {
+  display: grid;
+  min-width: 88px;
+  padding: 6px 10px;
+  align-content: center;
+  gap: 1px;
+  color: var(--text);
+  background: #fff;
+  text-align: center;
+}
+
+.inventory-stepper > strong > span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.inventory-stepper > strong > b {
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+.inventory-stepper small {
+  margin-left: 3px;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.inventory-stepper button:disabled {
+  color: #737b74;
+  background: #f0f2ee;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.inventory-card-bottom .inventory-shopping-button {
+  flex: 1 1 150px;
+  min-height: 48px;
+  font-size: 12px;
 }

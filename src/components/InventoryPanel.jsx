@@ -429,10 +429,29 @@ export function InventoryPanel({
                 {item.quantity === null ? (
                   <span className="inventory-no-count">個数未設定</span>
                 ) : (
-                  <div className="inventory-stepper" aria-label={`${item.name}の個数`}>
-                    <button type="button" disabled={!online || busy} onClick={() => changeQuantity(item, -1)}>−</button>
-                    <strong>{Number(item.quantity).toLocaleString('ja-JP')}<small>{item.unit}</small></strong>
-                    <button type="button" disabled={!online || busy} onClick={() => changeQuantity(item, 1)}>＋</button>
+                  <div className="inventory-stepper" aria-label={`${item.name}の現在数`}>
+                    <button
+                      type="button"
+                      aria-label={`${item.name}を1${item.unit}減らす`}
+                      disabled={!online || busy || Number(item.quantity) <= 0}
+                      onClick={() => changeQuantity(item, -1)}
+                    >
+                      <b aria-hidden="true">−</b>
+                      <span>減らす</span>
+                    </button>
+                    <strong>
+                      <span>現在</span>
+                      <b>{Number(item.quantity).toLocaleString('ja-JP')}<small>{item.unit}</small></b>
+                    </strong>
+                    <button
+                      type="button"
+                      aria-label={`${item.name}を1${item.unit}増やす`}
+                      disabled={!online || busy}
+                      onClick={() => changeQuantity(item, 1)}
+                    >
+                      <b aria-hidden="true">＋</b>
+                      <span>増やす</span>
+                    </button>
                   </div>
                 )}
                 {inventoryNeedsRestock(item) && (
