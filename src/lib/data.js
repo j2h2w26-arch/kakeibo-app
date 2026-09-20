@@ -32,6 +32,8 @@ export async function fetchHouseholdSnapshot() {
     lifeGoalRoutesResult,
     lifeGoalMilestonesResult,
     lifeGoalTaskLinksResult,
+    lifeGoalPhasesResult,
+    lifeGoalRelationsResult,
     appliancesResult,
     choresResult,
     choreCompletionsResult,
@@ -57,6 +59,8 @@ export async function fetchHouseholdSnapshot() {
     fetchAllRows(() => supabase.from('life_goal_routes').select('*').order('sort_order').order('id')),
     fetchAllRows(() => supabase.from('life_goal_milestones').select('*').order('sort_order').order('id')),
     fetchAllRows(() => supabase.from('life_goal_task_links').select('*').order('created_at').order('goal_id').order('task_id')),
+    fetchAllRows(() => supabase.from('life_goal_phases').select('*').order('sort_order').order('id')),
+    fetchAllRows(() => supabase.from('life_goal_relations').select('*').order('source_goal_id').order('target_goal_id')),
     fetchAllRows(() => supabase.from('household_appliances').select('*').order('manufacturer').order('name').order('id')),
     fetchAllRows(() => supabase.from('household_chores').select('*').order('sort_order').order('next_due_on').order('id')),
     fetchAllRows(() => supabase.from('household_chore_completions').select('*').order('completed_on', { ascending: false }).order('completed_at', { ascending: false }).order('id')),
@@ -124,6 +128,9 @@ export async function fetchHouseholdSnapshot() {
     lifeGoalRoutes,
     lifeGoalMilestones,
     lifeGoalTaskLinks,
+    lifeGoalPhases: unwrapOptional(lifeGoalPhasesResult) || [],
+    lifeGoalRelations: unwrapOptional(lifeGoalRelationsResult) || [],
+    lifeWorkspaceSchemaReady: !lifeGoalPhasesResult.error && !lifeGoalRelationsResult.error,
     lifePlanningSchemaReady: [
       lifeGoalsResult,
       lifeGoalRoutesResult,
@@ -291,7 +298,7 @@ export async function createLifeGoal(input) {
 }
 
 export async function updateLifeGoal(id, input) {
-  unwrap(await supabase.from('life_goals').update(input).eq('id', id))
+  unwrap(await supabase.from('life_goals').update(input).eq('id', id).select('id').single())
 }
 
 export async function createLifeGoalRoute(input) {
@@ -299,7 +306,7 @@ export async function createLifeGoalRoute(input) {
 }
 
 export async function updateLifeGoalRoute(id, input) {
-  unwrap(await supabase.from('life_goal_routes').update(input).eq('id', id))
+  unwrap(await supabase.from('life_goal_routes').update(input).eq('id', id).select('id').single())
 }
 
 export async function createLifeGoalMilestone(input) {
@@ -307,7 +314,27 @@ export async function createLifeGoalMilestone(input) {
 }
 
 export async function updateLifeGoalMilestone(id, input) {
-  unwrap(await supabase.from('life_goal_milestones').update(input).eq('id', id))
+  unwrap(await supabase.from('life_goal_milestones').update(input).eq('id', id).select('id').single())
+}
+
+export async function createLifeGoalPhase(input) {
+  unwrap(await supabase.from('life_goal_phases').insert([input]))
+}
+
+export async function updateLifeGoalPhase(id, input) {
+  unwrap(await supabase.from('life_goal_phases').update(input).eq('id', id).select('id').single())
+}
+
+export async function createLifeGoalRelation(input) {
+  unwrap(await supabase.from('life_goal_relations').insert([input]))
+}
+
+export async function removeLifeGoalRelation(sourceId, targetId) {
+  unwrap(await supabase.from('life_goal_relations').delete().eq('source_goal_id', sourceId).eq('target_goal_id', targetId).select('source_goal_id').single())
+}
+
+export async function assignLifeTaskPhase(goalId, taskId, phaseId) {
+  unwrap(await supabase.from('life_goal_task_links').update({ phase_id: phaseId }).eq('goal_id', goalId).eq('task_id', taskId).select('task_id').single())
 }
 
 export async function linkLifeTaskToGoal(input) {
