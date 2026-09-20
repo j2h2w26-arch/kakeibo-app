@@ -37,7 +37,9 @@ export function LoginScreen() {
     setBusy(true)
     setError('')
     const { error: recoveryError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: window.location.origin,
+      // Password reset must always return to the deployed app. Using the current
+      // origin here would put localhost URLs into emails sent from local development.
+      redirectTo: 'https://kakeibo-app-pi-umber.vercel.app',
     })
     if (recoveryError) {
       setError(messageFromError(recoveryError))
