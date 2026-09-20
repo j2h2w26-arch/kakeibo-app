@@ -197,7 +197,7 @@ export async function createInventoryItem(input) {
 }
 
 export async function updateInventoryItem(id, input) {
-  unwrap(await supabase.from('inventory_items').update(input).eq('id', id))
+  unwrap(await supabase.from('inventory_items').update(input).eq('id', id).select('id').single())
 }
 
 export async function removeInventoryItem(id) {

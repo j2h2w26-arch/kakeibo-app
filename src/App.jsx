@@ -60,6 +60,7 @@ import {
 import { messageFromError, todayInTokyo } from './lib/format'
 import { supabase } from './lib/supabase'
 import { deriveSyncStatus } from './lib/syncStatus'
+import { shoppingCategoryForInventory, statusForQuantity } from './lib/inventory'
 import './App.css'
 import { AppIcon } from './components/AppIcon'
 
@@ -326,19 +327,31 @@ function App() {
           onAddInventoryToShopping: (item) => runAction(
             () => createShoppingItem({
               name: item.name,
-              category: item.category,
+              category: shoppingCategoryForInventory(item.category),
               is_purchased: false,
               purchased_at: null,
             }),
             '買うものに追加しました',
           ),
+          onAddManyInventoryToShopping: (items) => runAction(
+            () => createShoppingItems(items.map((item) => ({
+              name: item.name,
+              category: shoppingCategoryForInventory(item.category),
+              is_purchased: false,
+              purchased_at: null,
+            }))),
+            `${items.length}件を買うものに追加しました`,
+          ),
           onReplenishInventory: (item) => runAction(
-            () => updateInventoryItem(item.id, {
-              status: 'enough',
-              quantity: item.quantity === null ? null : Number(item.quantity) + 1,
-              updated_by: member.user_id,
-              updated_at: new Date().toISOString(),
-            }),
+            () => {
+              const quantity = item.quantity === null ? null : Number(item.quantity) + 1
+              return updateInventoryItem(item.id, {
+                status: statusForQuantity(quantity, 'enough', item.min_quantity),
+                quantity,
+                updated_by: member.user_id,
+                updated_at: new Date().toISOString(),
+              })
+            },
             '在庫を補充しました',
           ),
         }}

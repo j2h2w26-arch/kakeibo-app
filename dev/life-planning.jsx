@@ -8,6 +8,7 @@ import { WishView } from '../src/components/WishView'
 import { LifeTasksView } from '../src/components/LifeTasksView'
 import { SettingsView } from '../src/components/SettingsView'
 import { AppIcon } from '../src/components/AppIcon'
+import { shoppingCategoryForInventory, statusForQuantity } from '../src/lib/inventory'
 import '../src/index.css'
 import '../src/App.css'
 
@@ -29,6 +30,12 @@ const initial = {
   phases: [{ id: 1, goal_id: 1, title: '調査', status: '進行中', target_date: '2027-03-01', sort_order: 10 }, { id: 2, goal_id: 1, title: '準備', status: '未着手', target_date: '2028-03-01', sort_order: 20 }],
   taskLinks: [{ goal_id: 2, task_id: 10 }, { goal_id: 3, task_id: 10 }],
   relations: [{ source_goal_id: 2, target_goal_id: 1, kind: '支える' }, { source_goal_id: 3, target_goal_id: 1, kind: '前提' }, { source_goal_id: 4, target_goal_id: 1, kind: '支える' }],
+  shopping: [{ id: 1, name: '買い物の表示を確認するためのテスト項目', category: '食材', is_purchased: false }],
+  inventory: [
+    { id: 1, name: '塩', category: '調味料', status: 'low', quantity: 0.5, min_quantity: 1, unit: '袋', note: '予備を1袋', expires_on: null, updated_at: '2026-09-20T09:00:00+09:00', updated_by: 'fixture' },
+    { id: 2, name: 'トイレットペーパー', category: '日用品', status: 'enough', quantity: 8, min_quantity: 4, unit: 'ロール', expires_on: null, updated_at: '2026-09-20T09:00:00+09:00', updated_by: 'fixture' },
+    { id: 3, name: '非常食', category: '防災品', status: 'out', quantity: 0, min_quantity: 3, unit: '個', expires_on: '2026-09-25', updated_at: '2026-09-20T09:00:00+09:00', updated_by: 'fixture' },
+  ],
 }
 
 export default function Preview() {
@@ -50,7 +57,23 @@ export default function Preview() {
     <div style={{ padding: 12 }}><label><input type="checkbox" checked={!online} onChange={(event) => setOnline(!event.target.checked)} />オフライン</label><label><input type="checkbox" checked={fail} onChange={(event) => setFail(event.target.checked)} />保存エラー</label><button type="button" onClick={() => { localStorage.removeItem(cacheKey); setData(initial) }}>テストデータを初期化</button><label>確認画面<select value={tab} onChange={(event) => setTab(event.target.value)}>{[['home','ホーム'],['money','お金'],['shopping','暮らし'],['wishes','人生設計'],['points','ポイント'],['wish-list','Wish'],['tasks','人生ToDo'],['settings','設定']].map(([value,label]) => <option key={value} value={value}>{label}</option>)}</select></label><p role="status">{notice}</p></div>
     <main className="app-content">{tab === 'home' ? <HomeView member={member} onNavigate={setTab} />
       : tab === 'money' ? <LoanView loans={[]} repayments={{}} expenses={[]} online={false} />
-      : tab === 'shopping' ? <LivingHubView shoppingProps={{items:[{id:1,name:'買い物の表示を確認するためのテスト項目',category:'食材',is_purchased:false}],inventoryItems:[],inventorySchemaReady:true,online:false}} choreProps={{chores:[],appliances:[],completions:[],schemaReady:true,today:'2026-09-20',online:false}} />
+      : tab === 'shopping' ? <LivingHubView shoppingProps={{
+        items: data.shopping ?? initial.shopping,
+        inventoryItems: data.inventory ?? initial.inventory,
+        inventorySchemaReady: true,
+        memberId: member.user_id,
+        online,
+        busy: false,
+        onCreateMany: (inputs) => change((current) => ({ ...current, shopping: [...(current.shopping ?? initial.shopping), ...inputs.map((item, index) => ({ ...item, id: Date.now() + index }))] })),
+        onUpdate: update('shopping'),
+        onDelete: (id) => change((current) => ({ ...current, shopping: (current.shopping ?? initial.shopping).filter((item) => item.id !== id) })),
+        onCreateInventory: create('inventory'),
+        onUpdateInventory: update('inventory'),
+        onDeleteInventory: (id) => change((current) => ({ ...current, inventory: (current.inventory ?? initial.inventory).filter((item) => item.id !== id) })),
+        onAddInventoryToShopping: (item) => create('shopping')({ name: item.name, category: shoppingCategoryForInventory(item.category), is_purchased: false }),
+        onAddManyInventoryToShopping: (items) => change((current) => ({ ...current, shopping: [...(current.shopping ?? initial.shopping), ...items.map((item, index) => ({ id: Date.now() + index, name: item.name, category: shoppingCategoryForInventory(item.category), is_purchased: false }))] })),
+        onReplenishInventory: (item) => { const quantity = item.quantity === null ? null : Number(item.quantity) + 1; return update('inventory')(item.id, { quantity, status: statusForQuantity(quantity, 'enough', item.min_quantity) }) },
+      }} choreProps={{chores:[],appliances:[],completions:[],schemaReady:true,today:'2026-09-20',online:false}} />
       : tab === 'points' ? <PointActionsView activities={[]} completions={[]} sources={[]} campaigns={[]} campaignSteps={[]} campaignStates={[]} servicePreferences={[]} syncRuns={[]} member={member} campaignSchemaReady online={false} />
       : tab === 'wish-list' ? <WishView wishes={[]} comments={[]} online={false} />
       : tab === 'tasks' ? <LifeTasksView tasks={data.tasks} schemaReady online={false} />

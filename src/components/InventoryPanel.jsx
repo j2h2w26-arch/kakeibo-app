@@ -1,10 +1,13 @@
 import { useMemo, useState } from 'react'
 import {
   changedInventoryQuantity,
+  INVENTORY_CATEGORIES,
   INVENTORY_STATUSES,
   INVENTORY_UNITS,
   inventoryNeedsRestock,
+  inventoryStatus,
   normalizeInventoryName,
+  restockAmount,
   sortInventoryItems,
   statusForQuantity,
 } from '../lib/inventory'
@@ -12,20 +15,20 @@ import { normalizeShoppingName } from '../lib/shopping'
 import { daysUntil } from '../lib/daily'
 import { todayInTokyo } from '../lib/format'
 
-const CATEGORIES = ['食材', '日用品', 'その他']
 const SUGGESTED_ITEMS = [
+  { name: '米', category: '食品' },
+  { name: '塩', category: '調味料' },
   { name: '洗濯洗剤', category: '日用品' },
-  { name: '食器用洗剤', category: '日用品' },
+  { name: '食器用洗剤', category: '掃除用品' },
   { name: 'トイレットペーパー', category: '日用品' },
-  { name: 'ティッシュ', category: '日用品' },
-  { name: '卵', category: '食材' },
-  { name: '米', category: '食材' },
+  { name: '非常食', category: '防災品' },
 ]
 const EMPTY_FORM = {
   name: '',
   category: '日用品',
   status: 'enough',
   quantity: '',
+  min_quantity: '',
   unit: '個',
   expires_on: '',
   note: '',
@@ -46,9 +49,10 @@ function updatedLabel(item, memberId) {
 function inventoryFormFrom(item) {
   return {
     name: item.name,
-    category: item.category,
+    category: item.category === '食材' ? '食品' : item.category,
     status: item.status,
     quantity: item.quantity ?? '',
+    min_quantity: item.min_quantity ?? '',
     unit: item.unit ?? '個',
     expires_on: item.expires_on ?? '',
     note: item.note ?? '',
@@ -66,8 +70,11 @@ export function InventoryPanel({
   onUpdate,
   onDelete,
   onAddToShopping,
+  onAddManyToShopping,
 }) {
   const [filter, setFilter] = useState('needed')
+  const [categoryFilter, setCategoryFilter] = useState('すべて')
+  const [query, setQuery] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState(EMPTY_FORM)
@@ -82,10 +89,18 @@ export function InventoryPanel({
     inventoryItems.map((item) => normalizeInventoryName(item.name)),
   ), [inventoryItems])
   const sortedItems = useMemo(() => sortInventoryItems(inventoryItems), [inventoryItems])
-  const shownItems = filter === 'needed'
-    ? sortedItems.filter(inventoryNeedsRestock)
-    : sortedItems
+  const shownItems = useMemo(() => {
+    const normalizedQuery = normalizeInventoryName(query)
+    return sortedItems.filter((item) => (
+      (filter !== 'needed' || inventoryNeedsRestock(item))
+      && (categoryFilter === 'すべて' || item.category === categoryFilter || (categoryFilter === '食品' && item.category === '食材'))
+      && (!normalizedQuery || normalizeInventoryName(`${item.name} ${item.note ?? ''}`).includes(normalizedQuery))
+    ))
+  }, [categoryFilter, filter, query, sortedItems])
   const neededCount = inventoryItems.filter(inventoryNeedsRestock).length
+  const missingFromShopping = sortedItems.filter((item) => (
+    inventoryNeedsRestock(item) && !pendingNames.has(normalizeShoppingName(item.name))
+  ))
 
   function resetForm() {
     setForm(EMPTY_FORM)
@@ -121,14 +136,24 @@ export function InventoryPanel({
     }
     const quantity = form.quantity === '' ? null : Number(form.quantity)
     if (quantity !== null && (!Number.isFinite(quantity) || quantity < 0)) {
-      setError('個数は0以上で入力してください。')
+      setError('現在数は0以上で入力してください。')
+      return
+    }
+    const minQuantity = form.min_quantity === '' ? null : Number(form.min_quantity)
+    if (minQuantity !== null && (!Number.isFinite(minQuantity) || minQuantity < 0)) {
+      setError('最低在庫数は0以上で入力してください。')
+      return
+    }
+    if (minQuantity !== null && quantity === null) {
+      setError('最低在庫数を使う場合は、現在数も入力してください。')
       return
     }
     const input = {
       name,
       category: form.category,
-      status: quantity === 0 ? 'out' : form.status,
+      status: statusForQuantity(quantity, form.status, minQuantity),
       quantity,
+      min_quantity: minQuantity,
       unit: quantity === null ? null : form.unit,
       expires_on: form.expires_on || null,
       note: form.note.trim() || null,
@@ -152,7 +177,7 @@ export function InventoryPanel({
     if (quantity === null) return
     await onUpdate(item.id, {
       quantity,
-      status: statusForQuantity(quantity, item.status),
+      status: statusForQuantity(quantity, item.status, item.min_quantity),
     })
   }
 
@@ -173,7 +198,7 @@ export function InventoryPanel({
           <span>補充が必要</span>
           <strong>{neededCount}<small>件</small></strong>
         </div>
-        <p>定番品だけ、ざっくり共有すればOK</p>
+        <p>最低在庫数を決めると、不足を自動で見つけます</p>
         <button
           type="button"
           onClick={() => {
@@ -186,6 +211,17 @@ export function InventoryPanel({
           {showForm && !editingId ? '閉じる' : '＋ 在庫を登録'}
         </button>
       </div>
+
+      {missingFromShopping.length > 0 && (
+        <button
+          className="inventory-bulk-shopping"
+          type="button"
+          disabled={!online || busy}
+          onClick={() => onAddManyToShopping(missingFromShopping)}
+        >
+          不足している{missingFromShopping.length}件を買うものへ
+        </button>
+      )}
 
       {showForm && (
         <form className="panel-form inventory-form" onSubmit={submit}>
@@ -204,7 +240,7 @@ export function InventoryPanel({
             />
           </label>
           <div className="category-row inventory-category-row" aria-label="カテゴリ">
-            {CATEGORIES.map((category) => (
+            {INVENTORY_CATEGORIES.map((category) => (
               <button
                 className={form.category === category ? 'active' : ''}
                 type="button"
@@ -215,21 +251,9 @@ export function InventoryPanel({
               </button>
             ))}
           </div>
-          <div className="inventory-status-choice" aria-label="在庫状況">
-            {INVENTORY_STATUSES.map((status) => (
-              <button
-                className={`status-${status.value} ${form.status === status.value ? 'active' : ''}`}
-                type="button"
-                key={status.value}
-                onClick={() => setForm({ ...form, status: status.value })}
-              >
-                {status.label}
-              </button>
-            ))}
-          </div>
           <div className="inventory-quantity-fields">
             <label>
-              <span>個数（任意）</span>
+              <span>現在数（任意）</span>
               <input
                 type="number"
                 min="0"
@@ -239,6 +263,20 @@ export function InventoryPanel({
                 placeholder="未設定"
                 value={form.quantity}
                 onChange={(event) => setForm({ ...form, quantity: event.target.value })}
+              />
+            </label>
+            <label>
+              <span>最低在庫数</span>
+              <input
+                type="number"
+                min="0"
+                max="999999.99"
+                step="0.01"
+                inputMode="decimal"
+                placeholder="未設定"
+                value={form.min_quantity}
+                disabled={form.quantity === ''}
+                onChange={(event) => setForm({ ...form, min_quantity: event.target.value })}
               />
             </label>
             <label>
@@ -252,6 +290,22 @@ export function InventoryPanel({
               </select>
             </label>
           </div>
+          {form.quantity !== '' && form.min_quantity !== '' ? (
+            <p className="inventory-auto-status">現在数と最低在庫数から、補充の要否を自動判定します。</p>
+          ) : (
+            <div className="inventory-status-choice" aria-label="在庫状況">
+              {INVENTORY_STATUSES.map((status) => (
+                <button
+                  className={`status-${status.value} ${form.status === status.value ? 'active' : ''}`}
+                  type="button"
+                  key={status.value}
+                  onClick={() => setForm({ ...form, status: status.value })}
+                >
+                  {status.label}
+                </button>
+              ))}
+            </div>
+          )}
           <label>
             <span>賞味・使用期限（任意）</span>
             <input
@@ -300,19 +354,40 @@ export function InventoryPanel({
         </button>
       </div>
 
+      <div className="inventory-search-filter">
+        <label>
+          <span>在庫を検索</span>
+          <input
+            type="search"
+            placeholder="品名・メモで検索"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+        </label>
+        <label>
+          <span>カテゴリ</span>
+          <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
+            <option>すべて</option>
+            {INVENTORY_CATEGORIES.map((category) => <option key={category}>{category}</option>)}
+          </select>
+        </label>
+      </div>
+
       <div className="inventory-list">
         {shownItems.length === 0 && inventoryItems.length > 0 && (
           <div className="empty-state compact">
-            <span>✓</span>
-            <strong>補充が必要なものはありません</strong>
-            <p>在庫状況を変更するとここに表示されます。</p>
+            <span>{query || categoryFilter !== 'すべて' ? '⌕' : '✓'}</span>
+            <strong>{query || categoryFilter !== 'すべて' ? '条件に合う在庫がありません' : '補充が必要なものはありません'}</strong>
+            <p>{query || categoryFilter !== 'すべて' ? '検索条件やカテゴリを変えてください。' : '在庫状況を変更するとここに表示されます。'}</p>
           </div>
         )}
         {shownItems.map((item) => {
           const inShopping = pendingNames.has(normalizeShoppingName(item.name))
           const expiryDays = daysUntil(item.expires_on, todayInTokyo())
+          const effectiveStatus = inventoryStatus(item)
+          const shortage = restockAmount(item)
           return (
-            <article className={`inventory-card status-${item.status}`} key={item.id}>
+            <article className={`inventory-card status-${effectiveStatus}`} key={item.id}>
               <div className="inventory-card-heading">
                 <div>
                   <span>{item.category}</span>
@@ -330,19 +405,26 @@ export function InventoryPanel({
                       : `期限まで${expiryDays}日`}
                 </p>
               )}
-              <div className="inventory-status-buttons" aria-label={`${item.name}の在庫状況`}>
-                {INVENTORY_STATUSES.map((status) => (
-                  <button
-                    className={`status-${status.value} ${item.status === status.value ? 'active' : ''}`}
-                    type="button"
-                    disabled={!online || busy}
-                    key={status.value}
-                    onClick={() => setStatus(item, status.value)}
-                  >
-                    {status.label}
-                  </button>
-                ))}
-              </div>
+              {item.quantity != null && item.min_quantity != null ? (
+                <p className={`inventory-threshold-status status-${effectiveStatus}`}>
+                  最低 {Number(item.min_quantity).toLocaleString('ja-JP')}{item.unit}
+                  {shortage > 0 ? `・あと${shortage.toLocaleString('ja-JP')}${item.unit}必要` : '・足りています'}
+                </p>
+              ) : (
+                <div className="inventory-status-buttons" aria-label={`${item.name}の在庫状況`}>
+                  {INVENTORY_STATUSES.map((status) => (
+                    <button
+                      className={`status-${status.value} ${effectiveStatus === status.value ? 'active' : ''}`}
+                      type="button"
+                      disabled={!online || busy}
+                      key={status.value}
+                      onClick={() => setStatus(item, status.value)}
+                    >
+                      {status.label}
+                    </button>
+                  ))}
+                </div>
+              )}
               <div className="inventory-card-bottom">
                 {item.quantity === null ? (
                   <span className="inventory-no-count">個数未設定</span>

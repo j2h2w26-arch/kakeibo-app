@@ -2730,6 +2730,68 @@
   margin-top: 18px;
 }
 
+.inventory-bulk-shopping {
+  width: 100%;
+  min-height: 44px;
+  margin-bottom: 14px;
+  border: 1px solid #9fbb99;
+  border-radius: 14px;
+  color: var(--shopping-ink);
+  background: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.inventory-search-filter {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(120px, 0.8fr);
+  gap: 9px;
+  margin-bottom: 12px;
+}
+
+.inventory-search-filter label {
+  min-width: 0;
+}
+
+.inventory-search-filter label > span {
+  display: block;
+  margin: 0 0 5px 2px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.inventory-search-filter input,
+.inventory-search-filter select {
+  width: 100%;
+  min-height: 44px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--text);
+  background: #fff;
+}
+
+.inventory-auto-status,
+.inventory-threshold-status {
+  padding: 10px 12px;
+  border-radius: 12px;
+  color: var(--shopping-ink) !important;
+  background: var(--shopping-soft);
+  font-size: 11px !important;
+  font-weight: 700;
+}
+
+.inventory-threshold-status.status-low,
+.inventory-threshold-status.status-out {
+  color: #713c2f !important;
+  background: #f7e1d8;
+}
+
+.inventory-quantity-fields {
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+}
+
 .money-mode-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;

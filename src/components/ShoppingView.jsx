@@ -23,6 +23,7 @@ export function ShoppingView({
   onUpdateInventory,
   onDeleteInventory,
   onAddInventoryToShopping,
+  onAddManyInventoryToShopping,
   onReplenishInventory,
 }) {
   const [mode, setMode] = useState('shopping')
@@ -122,6 +123,7 @@ export function ShoppingView({
           onUpdate={onUpdateInventory}
           onDelete={onDeleteInventory}
           onAddToShopping={onAddInventoryToShopping}
+          onAddManyToShopping={onAddManyInventoryToShopping}
         />
       ) : (
         <>
