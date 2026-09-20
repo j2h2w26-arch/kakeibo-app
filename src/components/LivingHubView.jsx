@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { HouseworkView } from './HouseworkView'
 import { ShoppingView } from './ShoppingView'
+import { RecipeView } from './RecipeView'
 
-export function LivingHubView({ shoppingProps, choreProps }) {
+export function LivingHubView({ shoppingProps, choreProps, recipeProps }) {
   const [section, setSection] = useState('shopping')
   const dueChores = choreProps.chores.filter((chore) => (
     chore.is_active && chore.next_due_on && chore.next_due_on <= choreProps.today
@@ -31,9 +32,20 @@ export function LivingHubView({ shoppingProps, choreProps }) {
           <strong>家事</strong>
           <small>{dueChores ? `期限 ${dueChores}件` : '順調'}</small>
         </button>
+        <button
+          type="button"
+          className={section === 'recipes' ? 'active' : ''}
+          aria-pressed={section === 'recipes'}
+          onClick={() => setSection('recipes')}
+        >
+          <span aria-hidden="true">≡</span>
+          <strong>レシピ</strong>
+          <small>{recipeProps.recipes.length}件</small>
+        </button>
       </div>
       <div hidden={section !== 'shopping'}><ShoppingView {...shoppingProps} /></div>
       <div hidden={section !== 'chores'}><HouseworkView {...choreProps} /></div>
+      <div hidden={section !== 'recipes'}><RecipeView {...recipeProps} /></div>
     </>
   )
 }

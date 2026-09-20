@@ -56,6 +56,9 @@ import {
   setPointCampaignDecision,
   setPointServicePreference,
   syncPointCampaigns,
+  saveRecipe,
+  removeRecipe,
+  importRecipeUrl,
 } from './lib/data'
 import { messageFromError, todayInTokyo } from './lib/format'
 import { supabase } from './lib/supabase'
@@ -373,6 +376,28 @@ function App() {
           onComplete: (id, completedOn) => runAction(
             () => completeChore(id, completedOn),
             '完了しました。次回期限も更新しました',
+          ),
+        }}
+        recipeProps={{
+          recipes: snapshot.recipes,
+          ingredients: snapshot.recipeIngredients,
+          steps: snapshot.recipeSteps,
+          inventoryItems: snapshot.inventoryItems,
+          shoppingItems: snapshot.items,
+          schemaReady: snapshot.recipesSchemaReady,
+          online,
+          busy,
+          onImport: importRecipeUrl,
+          onSave: (input) => runAction(() => saveRecipe(input), input.id ? 'レシピを更新しました' : 'レシピを保存しました'),
+          onDelete: (id) => runAction(() => removeRecipe(id), 'レシピを削除しました'),
+          onAddToShopping: (ingredientsToAdd) => runAction(
+            () => createShoppingItems(ingredientsToAdd.map((ingredient) => ({
+              name: ingredient.name,
+              category: '食材',
+              is_purchased: false,
+              purchased_at: null,
+            }))),
+            `${ingredientsToAdd.length}件を買うものに追加しました`,
           ),
         }}
       />

@@ -37,6 +37,9 @@ export async function fetchHouseholdSnapshot() {
     appliancesResult,
     choresResult,
     choreCompletionsResult,
+    recipesResult,
+    recipeIngredientsResult,
+    recipeStepsResult,
     pointActivitiesResult,
     pointCompletionsResult,
     pointSourcesResult,
@@ -64,6 +67,9 @@ export async function fetchHouseholdSnapshot() {
     fetchAllRows(() => supabase.from('household_appliances').select('*').order('manufacturer').order('name').order('id')),
     fetchAllRows(() => supabase.from('household_chores').select('*').order('sort_order').order('next_due_on').order('id')),
     fetchAllRows(() => supabase.from('household_chore_completions').select('*').order('completed_on', { ascending: false }).order('completed_at', { ascending: false }).order('id')),
+    fetchAllRows(() => supabase.from('recipes').select('*').eq('is_archived', false).order('updated_at', { ascending: false }).order('id', { ascending: false })),
+    fetchAllRows(() => supabase.from('recipe_ingredients').select('*').order('recipe_id').order('position').order('id')),
+    fetchAllRows(() => supabase.from('recipe_steps').select('*').order('recipe_id').order('position').order('id')),
     fetchAllRows(() => supabase.from('point_activities').select('*').order('sort_order').order('created_at').order('id')),
     fetchAllRows(() => supabase.from('point_activity_completions').select('*').order('completed_at', { ascending: false }).order('id')),
     fetchAllRows(() => supabase.from('point_sources').select('*').order('id')),
@@ -93,6 +99,9 @@ export async function fetchHouseholdSnapshot() {
   const appliances = unwrapOptional(appliancesResult) || []
   const chores = unwrapOptional(choresResult) || []
   const choreCompletions = unwrapOptional(choreCompletionsResult) || []
+  const recipes = unwrapOptional(recipesResult) || []
+  const recipeIngredients = unwrapOptional(recipeIngredientsResult) || []
+  const recipeSteps = unwrapOptional(recipeStepsResult) || []
   const pointActivities = unwrap(pointActivitiesResult) || []
   const pointCompletions = unwrap(pointCompletionsResult) || []
   const pointSources = unwrapOptional(pointSourcesResult) || []
@@ -141,6 +150,10 @@ export async function fetchHouseholdSnapshot() {
     chores,
     choreCompletions,
     choresSchemaReady: !appliancesResult.error && !choresResult.error && !choreCompletionsResult.error,
+    recipes,
+    recipeIngredients,
+    recipeSteps,
+    recipesSchemaReady: !recipesResult.error && !recipeIngredientsResult.error && !recipeStepsResult.error,
     pointActivities,
     pointCompletions,
     pointSources,
@@ -401,4 +414,33 @@ export async function syncPointCampaigns() {
   unwrap(await supabase.functions.invoke('sync-point-campaigns', {
     body: { trigger: 'manual' },
   }))
+}
+
+export async function saveRecipe(input) {
+  const data = unwrap(await supabase.rpc('save_recipe', {
+    p_recipe_id: input.id || null,
+    p_title: input.title,
+    p_source_url: input.source_url || null,
+    p_source_kind: input.source_kind || 'manual',
+    p_source_title: input.source_title || null,
+    p_servings: input.servings || null,
+    p_note: input.note || null,
+    p_ingredients: input.ingredients.map((item) => ({
+      name: item.name,
+      quantity_text: item.quantity_text || null,
+      inventory_item_id: item.inventory_item_id || null,
+    })),
+    p_steps: input.steps.map((item) => ({ body: item.body })),
+  }))
+  return data
+}
+
+export async function removeRecipe(id) {
+  unwrap(await supabase.from('recipes').delete().eq('id', id))
+}
+
+export async function importRecipeUrl(url) {
+  const data = unwrap(await supabase.functions.invoke('import-recipe', { body: { url } }))
+  if (data?.error) throw new Error(data.error)
+  return data
 }

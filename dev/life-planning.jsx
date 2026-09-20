@@ -36,6 +36,9 @@ const initial = {
     { id: 2, name: 'トイレットペーパー', category: '日用品', status: 'enough', quantity: 8, min_quantity: 4, unit: 'ロール', expires_on: null, updated_at: '2026-09-20T09:00:00+09:00', updated_by: 'fixture' },
     { id: 3, name: '非常食', category: '防災品', status: 'out', quantity: 0, min_quantity: 3, unit: '個', expires_on: '2026-09-25', updated_at: '2026-09-20T09:00:00+09:00', updated_by: 'fixture' },
   ],
+  recipes: [{ id: 1, title: '塩むすび', source_kind: 'manual', servings: '2個', note: '', updated_at: '2026-09-21T09:00:00+09:00' }],
+  recipeIngredients: [{ id: 1, recipe_id: 1, position: 0, name: '塩', quantity_text: '少々', inventory_item_id: 1 }],
+  recipeSteps: [{ id: 1, recipe_id: 1, position: 0, body: 'ごはんに塩を混ぜて握る' }],
 }
 
 export default function Preview() {
@@ -73,7 +76,20 @@ export default function Preview() {
         onAddInventoryToShopping: (item) => create('shopping')({ name: item.name, category: shoppingCategoryForInventory(item.category), is_purchased: false }),
         onAddManyInventoryToShopping: (items) => change((current) => ({ ...current, shopping: [...(current.shopping ?? initial.shopping), ...items.map((item, index) => ({ id: Date.now() + index, name: item.name, category: shoppingCategoryForInventory(item.category), is_purchased: false }))] })),
         onReplenishInventory: (item) => { const quantity = item.quantity === null ? null : Number(item.quantity) + 1; return update('inventory')(item.id, { quantity, status: statusForQuantity(quantity, 'enough', item.min_quantity) }) },
-      }} choreProps={{chores:[],appliances:[],completions:[],schemaReady:true,today:'2026-09-20',online:false}} />
+      }} choreProps={{chores:[],appliances:[],completions:[],schemaReady:true,today:'2026-09-20',online:false}} recipeProps={{
+        recipes: data.recipes ?? initial.recipes,
+        ingredients: data.recipeIngredients ?? initial.recipeIngredients,
+        steps: data.recipeSteps ?? initial.recipeSteps,
+        inventoryItems: data.inventory ?? initial.inventory,
+        shoppingItems: data.shopping ?? initial.shopping,
+        schemaReady: true,
+        online,
+        busy: false,
+        onImport: async (url) => ({ title: '取込テスト', source_url: url, source_kind: 'web', ingredients: [{ name: '米', quantity_text: '1合' }], steps: [{ body: '炊く' }], import_note: 'ローカル検証用です。' }),
+        onSave: async () => true,
+        onDelete: async () => true,
+        onAddToShopping: async () => true,
+      }} />
       : tab === 'points' ? <PointActionsView activities={[]} completions={[]} sources={[]} campaigns={[]} campaignSteps={[]} campaignStates={[]} servicePreferences={[]} syncRuns={[]} member={member} campaignSchemaReady online={false} />
       : tab === 'wish-list' ? <WishView wishes={[]} comments={[]} online={false} />
       : tab === 'tasks' ? <LifeTasksView tasks={data.tasks} schemaReady online={false} />
