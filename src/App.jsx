@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { HomeView } from './components/HomeView'
 import { LoanView } from './components/LoanView'
-import { LoginScreen } from './components/LoginScreen'
+import { LoginScreen, PasswordRecoveryScreen } from './components/LoginScreen'
 import { LivingHubView } from './components/LivingHubView'
 import { WishHubView } from './components/WishHubView'
 import { PointActionsView } from './components/PointActionsView'
@@ -95,6 +95,7 @@ function LoadingScreen({ message = '読み込んでいます…' }) {
 function App() {
   const [session, setSession] = useState(null)
   const [authLoading, setAuthLoading] = useState(true)
+  const [passwordRecovery, setPasswordRecovery] = useState(false)
   const [member, setMember] = useState(null)
   const [memberLoading, setMemberLoading] = useState(false)
   const [accessError, setAccessError] = useState('')
@@ -124,10 +125,14 @@ function App() {
         setAuthLoading(false)
       }
     })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession)
+      if (event === 'PASSWORD_RECOVERY') setPasswordRecovery(true)
       setAuthLoading(false)
-      if (!nextSession) setMember(null)
+      if (!nextSession) {
+        setMember(null)
+        setPasswordRecovery(false)
+      }
     })
     return () => {
       mounted = false
@@ -242,6 +247,7 @@ function App() {
 
   if (authLoading) return <LoadingScreen />
   if (!session) return <LoginScreen />
+  if (passwordRecovery) return <PasswordRecoveryScreen onComplete={() => setPasswordRecovery(false)} onSignOut={handleSignOut} />
   if (memberLoading) return <LoadingScreen message="アカウントを確認しています…" />
 
   if (accessError) {
