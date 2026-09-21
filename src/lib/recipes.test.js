@@ -3,16 +3,34 @@ import assert from 'node:assert/strict'
 import {
   groupRecipes,
   missingRecipeIngredients,
+  normalizeRecipeSourceUrl,
   recipeSearchText,
   recipeSourceKind,
 } from './recipes.js'
 
 test('URLからレシピの取得元を判定する', () => {
   assert.equal(recipeSourceKind('https://www.youtube.com/shorts/abc'), 'youtube')
+  assert.equal(recipeSourceKind('https://youtube.com/shorts/abc'), 'youtube')
   assert.equal(recipeSourceKind('https://youtu.be/abc'), 'youtube')
   assert.equal(recipeSourceKind('https://www.instagram.com/reel/abc'), 'instagram')
   assert.equal(recipeSourceKind('https://example.com/recipe'), 'web')
   assert.equal(recipeSourceKind('not-a-url'), 'manual')
+})
+
+test('スマホで共有されたURLのホストを自動で正規化する', () => {
+  assert.equal(
+    normalizeRecipeSourceUrl('https://youtube.com/shorts/duZYbTXdTUQ?si=shared'),
+    'https://www.youtube.com/shorts/duZYbTXdTUQ?si=shared',
+  )
+  assert.equal(
+    normalizeRecipeSourceUrl('https://m.youtube.com/watch?v=duZYbTXdTUQ'),
+    'https://www.youtube.com/watch?v=duZYbTXdTUQ',
+  )
+  assert.equal(
+    normalizeRecipeSourceUrl('https://instagram.com/reel/example/'),
+    'https://www.instagram.com/reel/example/',
+  )
+  assert.equal(normalizeRecipeSourceUrl('not-a-url'), 'not-a-url')
 })
 
 test('材料と手順を順番どおりにレシピへまとめる', () => {

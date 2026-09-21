@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import {
   groupRecipes,
   missingRecipeIngredients,
+  normalizeRecipeSourceUrl,
   recipeSearchText,
   recipeSourceKind,
 } from '../lib/recipes'
@@ -26,6 +27,14 @@ function emptyForm() {
 
 function sourceLabel(kind) {
   return { youtube: 'YouTube', instagram: 'Instagram', web: 'Web', manual: '手入力' }[kind] || '手入力'
+}
+
+function sourceActionLabel(kind) {
+  return {
+    youtube: 'YouTubeで動画を見る',
+    instagram: 'Instagramで投稿を見る',
+    web: '元のレシピを見る',
+  }[kind] || '元のページを開く'
 }
 
 export function RecipeView({
@@ -109,12 +118,14 @@ export function RecipeView({
     setImporting(true)
     setError('')
     try {
-      const imported = await onImport(url.trim())
+      const normalizedUrl = normalizeRecipeSourceUrl(url)
+      setUrl(normalizedUrl)
+      const imported = await onImport(normalizedUrl)
       setForm({
         ...emptyForm(),
         title: imported.title || '',
-        source_url: imported.source_url || url.trim(),
-        source_kind: imported.source_kind || recipeSourceKind(url.trim()),
+        source_url: imported.source_url || normalizedUrl,
+        source_kind: imported.source_kind || recipeSourceKind(normalizedUrl),
         source_title: imported.source_title || imported.title || '',
         servings: imported.servings || '',
         note: imported.note || '',
@@ -177,7 +188,7 @@ export function RecipeView({
           <input type="url" required placeholder="YouTube・Instagram・レシピページ" value={url} onChange={(event) => setUrl(event.target.value)} />
         </label>
         <button type="submit" disabled={!online || busy || importing}>{importing ? '読み取り中…' : 'URLから取り込む'}</button>
-        <small>対応ページは材料・手順を自動入力します。動画など取得できない場合も、リンクを残して手入力できます。</small>
+        <small>取得できるYouTube概要欄やレシピページから材料・手順を読み取ります。元リンクも残ります。</small>
       </form>
 
       <button className="recipe-manual-button" type="button" onClick={() => showForm ? closeForm() : setShowForm(true)}>
@@ -250,7 +261,7 @@ export function RecipeView({
                 {recipe.note && <p className="recipe-note">{recipe.note}</p>}
               </details>
               <div className="recipe-actions">
-                {recipe.source_url && <a href={recipe.source_url} target="_blank" rel="noreferrer">元のページを開く</a>}
+                {recipe.source_url && <a href={recipe.source_url} target="_blank" rel="noreferrer">{sourceActionLabel(recipe.source_kind)}</a>}
                 {missing.length > 0 && <button type="button" disabled={!online || busy} onClick={() => onAddToShopping(missing)}>不足{missing.length}件を買い物へ</button>}
               </div>
               <button className="recipe-delete" type="button" disabled={!online || busy} onClick={() => window.confirm(`${recipe.title}を削除しますか？`) && onDelete(recipe.id)}>削除</button>

@@ -4,11 +4,24 @@ import { normalizeShoppingName } from './shopping.js'
 export function recipeSourceKind(url = '') {
   try {
     const host = new URL(url).hostname.toLowerCase()
-    if (host === 'youtu.be' || host.endsWith('.youtube.com')) return 'youtube'
+    if (host === 'youtu.be' || host === 'youtube.com' || host.endsWith('.youtube.com')) return 'youtube'
     if (host === 'instagram.com' || host.endsWith('.instagram.com')) return 'instagram'
     return 'web'
   } catch {
     return 'manual'
+  }
+}
+
+export function normalizeRecipeSourceUrl(value = '') {
+  const input = value.trim()
+  try {
+    const url = new URL(input)
+    const host = url.hostname.toLowerCase().replace(/\.$/, '')
+    if (host === 'youtube.com' || host === 'm.youtube.com') url.hostname = 'www.youtube.com'
+    if (host === 'instagram.com' || host === 'm.instagram.com') url.hostname = 'www.instagram.com'
+    return url.toString()
+  } catch {
+    return input
   }
 }
 

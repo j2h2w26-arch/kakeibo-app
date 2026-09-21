@@ -1,5 +1,6 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from '@supabase/supabase-js'
+import { recipeDescriptionParts } from './description.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -152,7 +153,7 @@ function pageTitle(html: string) {
 
 function sourceKind(url: URL) {
   const host = url.hostname.toLowerCase()
-  if (host === 'youtu.be' || host.endsWith('.youtube.com')) return 'youtube'
+  if (host === 'youtu.be' || host === 'youtube.com' || host.endsWith('.youtube.com')) return 'youtube'
   if (host === 'instagram.com' || host.endsWith('.instagram.com')) return 'instagram'
   return 'web'
 }
@@ -160,22 +161,70 @@ function sourceKind(url: URL) {
 function youtubeId(url: URL) {
   if (url.hostname === 'youtu.be') return url.pathname.split('/').filter(Boolean)[0] || ''
   if (url.pathname.startsWith('/shorts/')) return url.pathname.split('/')[2] || ''
+  if (url.pathname.startsWith('/embed/') || url.pathname.startsWith('/live/')) return url.pathname.split('/')[2] || ''
   return url.searchParams.get('v') || ''
+}
+
+function normalizedSourceUrl(url: URL) {
+  const normalized = new URL(url)
+  const host = normalized.hostname.toLowerCase()
+  if (host === 'youtube.com' || host === 'm.youtube.com') normalized.hostname = 'www.youtube.com'
+  if (host === 'instagram.com' || host === 'm.instagram.com') normalized.hostname = 'www.instagram.com'
+  return normalized
+}
+
+async function youtubeSnippet(videoId: string) {
+  const apiKey = Deno.env.get('YOUTUBE_API_KEY')?.trim()
+  if (!apiKey) return null
+  const endpoint = new URL('https://www.googleapis.com/youtube/v3/videos')
+  endpoint.searchParams.set('part', 'snippet')
+  endpoint.searchParams.set('id', videoId)
+  endpoint.searchParams.set('key', apiKey)
+  try {
+    const response = await fetch(endpoint, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) })
+    if (!response.ok) return null
+    const payload = await response.json()
+    const snippet = payload?.items?.[0]?.snippet
+    if (!snippet) return null
+    return {
+      title: cleanText(snippet.title || '', 300),
+      description: typeof snippet.description === 'string' ? snippet.description : '',
+      channelTitle: cleanText(snippet.channelTitle || '', 160),
+    }
+  } catch {
+    return null
+  }
 }
 
 async function importYoutube(url: URL) {
   const videoId = youtubeId(url)
   if (!/^[\w-]{6,20}$/.test(videoId)) throw new Error('YouTube動画のURLを確認してください。')
-  const endpoint = `https://www.youtube.com/oembed?url=${encodeURIComponent(url.toString())}&format=json`
-  const response = await fetch(endpoint, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) })
-  const data = response.ok ? await response.json() : {}
+  const sourceUrl = normalizedSourceUrl(url)
+  const snippet = await youtubeSnippet(videoId)
+  const endpoint = `https://www.youtube.com/oembed?url=${encodeURIComponent(sourceUrl.toString())}&format=json`
+  let data: { title?: string } = {}
+  if (!snippet?.title) {
+    try {
+      const response = await fetch(endpoint, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) })
+      if (response.ok) data = await response.json()
+    } catch { /* the source link is still useful without metadata */ }
+  }
+  const descriptionParts = snippet ? recipeDescriptionParts(snippet.description) : { ingredients: [], steps: [] }
+  const extracted = descriptionParts.ingredients.length + descriptionParts.steps.length
   return {
-    title: cleanText(data.title || 'YouTubeのレシピ', 160),
-    source_title: cleanText(data.title || '', 300),
-    source_url: url.toString(),
+    title: cleanText(snippet?.title || data.title || 'YouTubeのレシピ', 160),
+    source_title: cleanText(snippet?.title || data.title || '', 300),
+    source_url: sourceUrl.toString(),
     source_kind: 'youtube',
-    servings: '', ingredients: [], steps: [],
-    import_note: 'YouTubeからタイトルとリンクを保存しました。動画の字幕は自動取得せず、材料と手順を確認して入力してください。',
+    servings: '',
+    ingredients: descriptionParts.ingredients,
+    steps: descriptionParts.steps,
+    note: snippet?.channelTitle ? `投稿者: ${snippet.channelTitle}` : '',
+    import_note: extracted
+      ? `YouTubeの概要欄から材料${descriptionParts.ingredients.length}件・手順${descriptionParts.steps.length}件を読み取りました。内容を確認して保存してください。`
+      : snippet
+        ? 'YouTubeのタイトルとリンクを保存しました。概要欄に材料・手順の見出しが見つからなかったため、必要な内容を入力してください。'
+        : 'YouTubeのタイトルとリンクを保存しました。概要欄を取得できなかったため、必要な内容を入力してください。',
   }
 }
 
@@ -230,7 +279,7 @@ Deno.serve(async (req) => {
     if (!member) return json({ error: '家族メンバーだけが利用できます。' }, 403)
 
     const body = await req.json().catch(() => ({}))
-    const url = await validateTarget(typeof body.url === 'string' ? body.url : '')
+    const url = normalizedSourceUrl(await validateTarget(typeof body.url === 'string' ? body.url : ''))
     const kind = sourceKind(url)
     if (kind === 'youtube') return json(await importYoutube(url))
     if (kind === 'instagram') return json(importInstagram(url))

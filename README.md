@@ -43,6 +43,12 @@ npm run build
 
 Freeプランでの漏洩パスワード保護の扱い、端末キャッシュ、レシート画像の運用は[`docs/security-operations.md`](docs/security-operations.md)を正本とします。
 
+### YouTubeレシピ取込
+
+`import-recipe` Edge Functionは、`youtube.com`/`www.youtube.com`/`m.youtube.com`の共有URLを受け取り、元動画へのリンクをレシピに残します。概要欄から材料・手順を自動入力するには、YouTube Data API v3を有効化したGoogle CloudプロジェクトのAPIキーを、Supabase Edge FunctionsのSecret `YOUTUBE_API_KEY`として登録してください。キーはブラウザ側の環境変数に置かないでください。
+
+キーがない場合やYouTube側で概要欄を取得できない場合も、タイトルと元リンクだけで入力画面へ進めます。概要欄に明確な「材料」「作り方」等の見出しがない場合は内容を推測せず、利用者が確認・追記します。第三者の動画の字幕・音声は取得しません。
+
 ## Deployment order
 
 1. Supabaseの準備マイグレーションを適用

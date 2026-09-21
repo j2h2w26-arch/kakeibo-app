@@ -1,3 +1,4 @@
+import { FunctionsHttpError } from '@supabase/supabase-js'
 import { supabase } from './supabase'
 import { mapRepayments } from './format'
 import { collectPages } from './pagination'
@@ -440,7 +441,18 @@ export async function removeRecipe(id) {
 }
 
 export async function importRecipeUrl(url) {
-  const data = unwrap(await supabase.functions.invoke('import-recipe', { body: { url } }))
+  const result = await supabase.functions.invoke('import-recipe', { body: { url } })
+  if (result.error) {
+    if (result.error instanceof FunctionsHttpError) {
+      let payload = null
+      try {
+        payload = await result.error.context.json()
+      } catch { /* response body was not JSON */ }
+      throw new Error(payload?.error || 'URLを読み取れませんでした。')
+    }
+    throw new Error(result.error.message || 'URLを読み取れませんでした。')
+  }
+  const data = result.data
   if (data?.error) throw new Error(data.error)
   return data
 }
