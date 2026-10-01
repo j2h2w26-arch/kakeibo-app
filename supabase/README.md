@@ -1,5 +1,14 @@
 # Supabase setup
 
+> Current operations (2026-10-02): production already has both users and RLS.
+> The phases below are historical first-cutover instructions, not steps to rerun.
+> Do not recreate users, reset production, or disable RLS for verification.
+> Compare migration names and contents as well as IDs; some live IDs differ from local filenames.
+> The original loans/repayments/shopping_items schema predates these migrations,
+> so this directory alone is not a complete empty-database bootstrap.
+> Use isolated PGlite regression tests. Production changes and Edge Function
+> deployment require explicit approval after Draft PR/Preview review.
+
 The migration is intentionally split so the currently deployed anonymous app
 does not stop working before the authenticated frontend is ready.
 
