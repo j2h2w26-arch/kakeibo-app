@@ -66,6 +66,7 @@ import { deriveSyncStatus } from './lib/syncStatus'
 import { shoppingCategoryForInventory, statusForQuantity } from './lib/inventory'
 import './App.css'
 import { AppIcon } from './components/AppIcon'
+import { PwaUpdateNotice } from './components/PwaUpdateNotice'
 
 const MEMBER_CACHE_KEY = 'futari-wallet-member-v1'
 
@@ -96,7 +97,7 @@ function LoadingScreen({ message = '読み込んでいます…' }) {
   )
 }
 
-function App() {
+function HouseholdApp({ onBusyChange }) {
   const [session, setSession] = useState(null)
   const [authLoading, setAuthLoading] = useState(true)
   const [passwordRecovery, setPasswordRecovery] = useState(false)
@@ -215,6 +216,7 @@ function App() {
       return false
     }
     setBusy(true)
+    onBusyChange(true)
     try {
       const actionResult = await action()
       const refreshResult = await refresh({ quiet: true })
@@ -231,8 +233,9 @@ function App() {
       return false
     } finally {
       setBusy(false)
+      onBusyChange(false)
     }
-  }, [refresh])
+  }, [refresh, onBusyChange])
 
   const showReminder = useCallback((message) => {
     setToast({ type: 'success', message })
@@ -615,4 +618,10 @@ function App() {
   )
 }
 
-export default App
+export default function App({ updater }) {
+  const [busy, setBusy] = useState(false)
+  return <>
+    {updater && <PwaUpdateNotice updater={updater} busy={busy} />}
+    <HouseholdApp onBusyChange={setBusy} />
+  </>
+}

@@ -1,12 +1,17 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import process from 'node:process'
 
 export default defineConfig({
+  define: {
+    'import.meta.env.VITE_APP_BUILD': JSON.stringify(process.env.VITE_APP_BUILD || process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || 'local'),
+  },
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
+      injectRegister: false,
       includeAssets: ['favicon.svg', 'futari-home-apple-touch-icon.png'],
       manifest: {
         name: 'ふたりの暮らし',
@@ -42,6 +47,8 @@ export default defineConfig({
         ],
       },
       workbox: {
+        clientsClaim: true,
+        skipWaiting: false,
         globIgnores: ['**/ocr/**'],
         navigateFallback: '/index.html',
         cleanupOutdatedCaches: true,
