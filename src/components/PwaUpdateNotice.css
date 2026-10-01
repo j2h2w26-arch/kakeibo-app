@@ -1,0 +1,11 @@
+.pwa-update { position: relative; z-index: 60; max-width: 76rem; margin: 0 auto; padding: .4rem 1rem; color: #343f34; font-size: .85rem; }
+.pwa-update details { border: 1px solid #a7b5a1; border-radius: 12px; background: #f7f8f3; padding: .55rem .8rem; }
+.pwa-update--available details { background: #e3ecd9; border-color: #718765; }
+.pwa-update summary { cursor: pointer; min-height: 28px; align-content: center; font-weight: 700; }
+.pwa-update p { line-height: 1.65; margin: .65rem 0; }
+.pwa-update__actions { display: flex; gap: .6rem; flex-wrap: wrap; }
+.pwa-update button { min-height: 44px; border: 1px solid #5d7053; border-radius: 10px; padding: .55rem .85rem; background: white; color: #34462c; font-weight: 700; cursor: pointer; }
+.pwa-update button:disabled { opacity: 1; color: #62675e; background: #e4e6e0; border-color: #999f95; cursor: not-allowed; }
+.pwa-update dialog { max-width: min(30rem, calc(100vw - 2rem)); border: 1px solid #718765; border-radius: 18px; padding: 1.3rem; color: #292f2c; background: #fffefb; }
+.pwa-update dialog::backdrop { background: rgb(25 35 25 / 50%); }
+.pwa-update dialog h2 { font-size: 1.2rem; }
