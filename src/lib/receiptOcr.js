@@ -32,7 +32,8 @@ function amountsInLine(line) {
 function extractAmount(lines) {
   const ranked = []
   lines.forEach((line, index) => {
-    if (EXCLUDED_AMOUNT_LABELS.test(line)) return
+    // 「税込合計」は税額ではなく支払総額。他の税・釣銭ラベルは引き続き除外する。
+    if (EXCLUDED_AMOUNT_LABELS.test(line.replace(/税込合計/g, '合計'))) return
     const labelRank = TOTAL_LABELS.findIndex((pattern) => pattern.test(line))
     if (labelRank === -1) return
     for (const amount of amountsInLine(line)) {

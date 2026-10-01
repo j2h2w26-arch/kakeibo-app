@@ -2,6 +2,17 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { parseReceiptText } from './receiptOcr.js'
 
+test('parseReceiptText keeps the tax-inclusive total instead of treating it as tax', () => {
+  const result = parseReceiptText('ふたり商店\n小計 1000\n税込合計 ￥1,100\n消費税 100\nお預り 2000\nおつり 900')
+  assert.equal(result.amount, 1100)
+})
+
+test('parseReceiptText still excludes tax, subtotal, discount and change amounts', () => {
+  for (const line of ['消費税 合計 100', '内税 合計 100', '外税 合計 100', '小計 合計 1000', '割引 合計 100', 'おつり 合計 900', 'subtotal 1000', 'tax total 100', 'change total 900', '税込合計 消費税 100']) {
+    assert.equal(parseReceiptText(line).amount, null, line)
+  }
+})
+
 test('parseReceiptText extracts Japanese receipt fields and ignores subtotal', () => {
   const result = parseReceiptText(`
     まいばすけっと 神田店
