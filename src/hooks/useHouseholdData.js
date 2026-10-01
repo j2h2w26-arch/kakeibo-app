@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { fetchHouseholdSnapshot } from '../lib/data'
+import { createSnapshotLoader } from '../lib/snapshotLoader'
 import {
   clearHouseholdCache,
   readHouseholdCache,
@@ -49,8 +50,10 @@ const EMPTY_SNAPSHOT = {
   pointCampaignSchemaReady: false,
 }
 
-export function useHouseholdData(enabled) {
+export function useHouseholdData(userId) {
+  const enabled = Boolean(userId)
   const [snapshot, setSnapshot] = useState(EMPTY_SNAPSHOT)
+  const [snapshotOwner, setSnapshotOwner] = useState(null)
   const [loading, setLoading] = useState(true)
   const [syncState, setSyncState] = useState('idle')
   const [realtimeState, setRealtimeState] = useState('idle')
@@ -58,56 +61,54 @@ export function useHouseholdData(enabled) {
   const [error, setError] = useState(null)
   const [realtimeRetryKey, setRealtimeRetryKey] = useState(0)
   const timerRef = useRef(null)
-  const requestIdRef = useRef(0)
+  const [loader] = useState(() => createSnapshotLoader(fetchHouseholdSnapshot, writeHouseholdCache))
 
   const refresh = useCallback(async ({ quiet = false } = {}) => {
-    if (!enabled) return { ok: false, skipped: true }
-    const requestId = requestIdRef.current + 1
-    requestIdRef.current = requestId
+    if (!enabled || !loader.isActive(userId)) return { ok: false, skipped: true }
     if (!quiet) setLoading(true)
     setSyncState('syncing')
-    try {
-      const nextSnapshot = await fetchHouseholdSnapshot()
-      const savedAt = writeHouseholdCache(nextSnapshot)
-      if (requestId === requestIdRef.current) {
+    return loader.load(userId, {
+      onSuccess(nextSnapshot, savedAt) {
         setSnapshot(nextSnapshot)
+        setSnapshotOwner(userId)
         setLastSyncedAt(savedAt)
         setError(null)
         setSyncState('synced')
-      }
-      return { ok: true, syncedAt: savedAt }
-    } catch (nextError) {
-      if (requestId === requestIdRef.current) {
+      },
+      onError(nextError) {
         setError(nextError)
         setSyncState('error')
-      }
-      return { ok: false, error: nextError }
-    } finally {
-      if (requestId === requestIdRef.current) setLoading(false)
-    }
-  }, [enabled])
+      },
+      onSettled() { setLoading(false) },
+    })
+  }, [enabled, userId, loader])
 
   useEffect(() => {
-    if (!enabled) {
-      requestIdRef.current += 1
-      window.clearTimeout(timerRef.current)
-      setSnapshot(EMPTY_SNAPSHOT)
-      setLoading(true)
-      setSyncState('idle')
-      setRealtimeState('idle')
-      setLastSyncedAt(null)
+    loader.invalidate()
+    if (enabled) loader.activate(userId)
+    let active = true
+    // Restore browser storage after subscribing, never during render. The owner
+    // check in the return value hides the previous account immediately.
+    queueMicrotask(() => {
+      if (!active) return
+      const cached = enabled ? readHouseholdCache(userId) : null
+      setSnapshot(cached ? { ...EMPTY_SNAPSHOT, ...cached.snapshot } : EMPTY_SNAPSHOT)
+      setSnapshotOwner(userId || null)
+      setLastSyncedAt(cached?.savedAt || null)
       setError(null)
-      return undefined
+      if (enabled) refresh()
+      else {
+        setLoading(true)
+        setSyncState('idle')
+        setRealtimeState('idle')
+      }
+    })
+    return () => {
+      active = false
+      window.clearTimeout(timerRef.current)
+      loader.invalidate()
     }
-
-    const cached = readHouseholdCache()
-    if (cached) {
-      setSnapshot({ ...EMPTY_SNAPSHOT, ...cached.snapshot })
-      setLastSyncedAt(cached.savedAt)
-    }
-    refresh()
-    return undefined
-  }, [enabled, refresh])
+  }, [enabled, userId, refresh, loader])
 
   useEffect(() => {
     if (!enabled) return undefined
@@ -118,7 +119,7 @@ export function useHouseholdData(enabled) {
     }
 
     let active = true
-    setRealtimeState('connecting')
+    queueMicrotask(() => { if (active) setRealtimeState('connecting') })
     let channel = supabase
       .channel('futari-home-live')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'loans' }, queueRefresh)
@@ -217,20 +218,21 @@ export function useHouseholdData(enabled) {
   }, [refresh])
 
   const clearLocalData = useCallback(() => {
-    requestIdRef.current += 1
+    loader.invalidate()
     window.clearTimeout(timerRef.current)
     clearHouseholdCache()
     setSnapshot(EMPTY_SNAPSHOT)
+    setSnapshotOwner(null)
     setLoading(true)
     setSyncState('idle')
     setRealtimeState('idle')
     setLastSyncedAt(null)
     setError(null)
-  }, [])
+  }, [loader])
 
   return {
-    snapshot,
-    loading,
+    snapshot: snapshotOwner === userId ? snapshot : EMPTY_SNAPSHOT,
+    loading: snapshotOwner !== userId || loading,
     syncState,
     realtimeState,
     lastSyncedAt,

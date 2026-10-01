@@ -107,6 +107,8 @@ function App() {
   const [online, setOnline] = useState(() => navigator.onLine)
   const [busy, setBusy] = useState(false)
   const [toast, setToast] = useState(null)
+  const sessionUserId = session?.user?.id
+  const activeMember = member?.user_id === sessionUserId ? member : null
 
   const {
     snapshot,
@@ -118,61 +120,78 @@ function App() {
     refresh,
     retrySync,
     clearLocalData,
-  } = useHouseholdData(Boolean(member))
+  } = useHouseholdData(activeMember?.user_id)
   const syncStatus = deriveSyncStatus({ online, syncState, realtimeState })
 
   useEffect(() => {
     let mounted = true
-    supabase.auth.getSession().then(({ data }) => {
-      if (mounted) {
-        setSession(data.session)
-        setAuthLoading(false)
+    let authEventSeen = false
+    let currentUserId = null
+    const applySession = (nextSession) => {
+      const nextUserId = nextSession?.user?.id || null
+      if (!nextUserId || (currentUserId && currentUserId !== nextUserId)) {
+        clearLocalData()
+        try { localStorage.removeItem(MEMBER_CACHE_KEY) } catch { /* Storage disabled. */ }
       }
-    })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
-      setSession(nextSession)
-      if (event === 'PASSWORD_RECOVERY') setPasswordRecovery(true)
-      setAuthLoading(false)
-      if (!nextSession) {
+      if (currentUserId !== nextUserId || !nextUserId) {
         setMember(null)
+        setToast(null)
+        setAccessError('')
+        setTab('home')
         setPasswordRecovery(false)
       }
+      currentUserId = nextUserId
+      setSession(nextSession)
+      setAuthLoading(false)
+    }
+    supabase.auth.getSession().then(({ data }) => {
+      if (mounted && !authEventSeen) applySession(data.session)
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      if (!mounted) return
+      authEventSeen = true
+      applySession(nextSession)
+      if (event === 'PASSWORD_RECOVERY') setPasswordRecovery(true)
     })
     return () => {
       mounted = false
       subscription.unsubscribe()
     }
-  }, [])
+  }, [clearLocalData])
 
   useEffect(() => {
-    if (!session) return undefined
+    if (!sessionUserId) return undefined
     let mounted = true
     setMemberLoading(true)
+    setMember(null)
     setAccessError('')
     supabase
       .from('app_members')
       .select('user_id, display_name')
-      .eq('user_id', session.user.id)
+      .eq('user_id', sessionUserId)
       .maybeSingle()
       .then(({ data, error: memberError }) => {
         if (!mounted) return
         if (memberError) {
-          const cachedMember = readCachedMember(session.user.id)
+          const cachedMember = readCachedMember(sessionUserId)
           if (!navigator.onLine && cachedMember) {
             setMember(cachedMember)
           } else {
+            clearLocalData()
             setAccessError(messageFromError(memberError))
           }
         } else if (!data) {
+          clearLocalData()
+          try { localStorage.removeItem(MEMBER_CACHE_KEY) } catch { /* Storage disabled. */ }
           setAccessError('このアカウントは夫婦メンバーとして登録されていません。')
         } else {
           setMember(data)
-          localStorage.setItem(MEMBER_CACHE_KEY, JSON.stringify(data))
+          try { localStorage.setItem(MEMBER_CACHE_KEY, JSON.stringify(data)) } catch { /* Online access still works. */ }
         }
         setMemberLoading(false)
       })
     return () => { mounted = false }
-  }, [session])
+  }, [sessionUserId, clearLocalData])
 
   useEffect(() => {
     const updateOnline = () => setOnline(navigator.onLine)
@@ -220,7 +239,7 @@ function App() {
   }, [])
 
   useDailyReminder({
-    memberId: member?.user_id,
+    memberId: activeMember?.user_id,
     preferences: snapshot.notificationPreferences,
     snapshot,
     onReminder: showReminder,
@@ -246,7 +265,7 @@ function App() {
       return
     }
     clearLocalData()
-    localStorage.removeItem(MEMBER_CACHE_KEY)
+    try { localStorage.removeItem(MEMBER_CACHE_KEY) } catch { /* Storage disabled. */ }
   }
 
   if (authLoading) return <LoadingScreen />
@@ -267,7 +286,7 @@ function App() {
     )
   }
 
-  if (!member) return <LoadingScreen />
+  if (!activeMember) return <LoadingScreen />
 
   const showInitialLoader = loading && snapshot.loans.length === 0 && snapshot.items.length === 0
 
