@@ -159,7 +159,11 @@ export function ExpensePanel({ expenses, online, busy, onCreate, onDelete, onOpe
             </div>
           )}
           <p className="receipt-note">写真からお店・日付・金額などを入力できます。初回の準備には少し時間がかかります。読み取り後は内容を確認してください。</p>
-          <details className="receipt-privacy"><summary>写真のプライバシーについて</summary><p>文字認識はこの端末内で行い、外部OCRサービスへ画像を送信しません。保存した写真は、家族だけが見られる非公開領域に保管されます。</p></details>
+          <details className="receipt-privacy">
+            <summary>写真のプライバシーについて</summary>
+            <p>文字認識はこの端末内で行い、外部OCRサービスへ画像を送信しません。読み取り用の言語データを初回などに外部配信元（jsDelivr）からダウンロードします。</p>
+            <p>「内容を確認して保存」を押すと、写真を家族用の非公開ストレージ（Supabase）へ送信します。写真に自動の保存期限はなく、支出の削除時に写真も削除します。削除に失敗した場合は警告が表示されます。</p>
+          </details>
           <div className="form-grid">
             <label>
               <span>日付</span>
