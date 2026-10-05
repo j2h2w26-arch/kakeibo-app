@@ -48,4 +48,8 @@ snapshotLoaderは最新リクエストだけを画面とキャッシュに反映
 
 ## 検証と移行
 
+### Push購読の土台（Draft・本番未適用）
+
+`push_private.subscriptions`へ配送先と購読鍵を保存する予定。Data APIへschemaを公開せず、直接の表権限は全クライアントから剥奪、RLSも有効。公開3RPCはinvoker、privateの限定definerが`auth.uid()`と現在のapp_membersを確認する。レスポンスは端末名/ID/日時だけで鍵やURLを返さない。送信者用権限・受信SW・UIは後続であり、現在の家計スナップショットには追加しない。[詳細](push-subscription-foundation.md)。
+
 Node単体/PGlite隔離SQLテストはAuthとStorageの最小スタブを使い、実サービスの署名/ファイル配信を証明しない。最初の3テーブルはマイグレーション以前で、空DB用完全bootstrapは未整備。移行IDが本番と異なる履歴は名前・内容も照合し二重適用を防ぐ。Draft PR/Previewの承認まで本番変更しない。Previewも本番DBにつながり得る。
