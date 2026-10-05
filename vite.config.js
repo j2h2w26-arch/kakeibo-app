@@ -47,6 +47,7 @@ export default defineConfig({
         ],
       },
       workbox: {
+        importScripts: ['/push-worker.js'],
         clientsClaim: true,
         skipWaiting: false,
         globIgnores: ['**/ocr/**'],

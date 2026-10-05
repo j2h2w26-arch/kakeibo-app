@@ -1,6 +1,6 @@
 # 構成・データ境界
 
-更新: 2026-10-02。このブランチのコード（未マージの②③を含む）に基づく。
+更新: 2026-10-06。このブランチのコード（未マージの②③⑥を含む）に基づく。
 
 ## アプリと配信
 
@@ -50,6 +50,8 @@ snapshotLoaderは最新リクエストだけを画面とキャッシュに反映
 
 ### Push購読の土台（Draft・本番未適用）
 
-`push_private.subscriptions`へ配送先と購読鍵を保存する予定。Data APIへschemaを公開せず、直接の表権限は全クライアントから剥奪、RLSも有効。公開3RPCはinvoker、privateの限定definerが`auth.uid()`と現在のapp_membersを確認する。レスポンスは端末名/ID/日時だけで鍵やURLを返さない。送信者用権限・受信SW・UIは後続であり、現在の家計スナップショットには追加しない。[詳細](push-subscription-foundation.md)。
+`push_private.subscriptions`へ配送先と購読鍵を保存する予定。Data APIへschemaを公開せず、直接の表権限は全クライアントから剥奪、RLSも有効。公開3RPCはinvoker、privateの限定definerが`auth.uid()`と現在のapp_membersを確認する。レスポンスは端末名/ID/日時だけで鍵やURLを返さない。現在の家計スナップショットには追加しない。[詳細](push-subscription-foundation.md)。
+
+⑥-2のDraftではPushNotificationSettings→pushDevice→本人JWTに固定したRPCを追加。ローカル同意は専用IndexedDB、同originの競合はWeb Locksで制御する。既存SWへpush-worker.jsをimportScriptsし、同意/所有者/購読ID/期限を確認して固定一般文のみ表示。標準は無効。VAPID公開鍵だけがVITE_の対象で、秘密鍵・送信者権限・Cronは後続。[検証と制約](push-device-controls.md)。
 
 Node単体/PGlite隔離SQLテストはAuthとStorageの最小スタブを使い、実サービスの署名/ファイル配信を証明しない。最初の3テーブルはマイグレーション以前で、空DB用完全bootstrapは未整備。移行IDが本番と異なる履歴は名前・内容も照合し二重適用を防ぐ。Draft PR/Previewの承認まで本番変更しない。Previewも本番DBにつながり得る。

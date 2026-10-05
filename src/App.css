@@ -5589,3 +5589,21 @@ summary:focus-visible {
   .recipe-ingredient-row { grid-template-columns: minmax(0, 1.4fr) minmax(72px, .7fr) 42px; }
   .recipe-ingredient-row select { grid-column: 1 / 3; }
 }
+/* Device consent controls: readable neutral colors, independent of theme accents. */
+.push-settings { margin: 24px 0; padding: 22px; background: #fff; color: #29342d; border: 1px solid #b7c3b2; border-radius: 20px; }
+.push-settings h3 { margin-top: 0; font-size: 1.15rem; }
+.push-settings p { line-height: 1.7; }
+.push-settings .push-status { font-weight: 700; color: #35533b; }
+.push-controls { display: grid; gap: 12px; }
+.push-controls > input { width: 100%; min-width: 0; color: #29342d; background: #fff; border: 1px solid #788773; border-radius: 10px; padding: 12px; }
+.push-consent { display: flex; align-items: flex-start; gap: 10px; line-height: 1.6; }
+.push-consent input { flex: 0 0 auto; width: 22px; height: 22px; accent-color: #35533b; }
+.push-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+.push-settings button { min-height: 44px; white-space: normal; }
+.push-settings .primary-button { color: #fff; background: #35533b; border: 1px solid #35533b; box-shadow: none; }
+.push-settings .secondary-button { color: #35533b; background: #fff; border: 1px solid #788773; box-shadow: none; }
+.push-settings button:disabled { color: #536054; background: #e9ece6; border-color: #aab4a5; opacity: 1; }
+.push-feedback { padding: 12px; background: #f4ead5; color: #5d421d; border-radius: 10px; }
+.push-devices { padding: 0; list-style: none; }
+.push-devices li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid #d3dbd0; overflow-wrap: anywhere; }
+.push-settings .push-note { color: #4f5e51; font-size: .9rem; }
