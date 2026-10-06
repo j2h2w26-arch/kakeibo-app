@@ -13,13 +13,7 @@ export function DailyReminderSettings({ preferences, online, busy, onSave }) {
   const [error, setError] = useState('')
 
   async function save() {
-    if ((form.morning_enabled || form.evening_enabled) && 'Notification' in window) {
-      const permission = await Notification.requestPermission()
-      if (permission !== 'granted') {
-        setError('端末の通知が許可されていません。設定から通知を許可してください。')
-        return
-      }
-    }
+    // Saving a schedule is not consent to OS notifications or Push registration.
     const success = await onSave({
       morning_enabled: form.morning_enabled,
       morning_time: form.morning_time,
@@ -40,7 +34,7 @@ export function DailyReminderSettings({ preferences, online, busy, onSave }) {
       </button>
       {open && (
         <div className="reminder-settings-panel">
-          <p>アプリを開いたとき、設定時刻を過ぎていれば1日1回お知らせします。</p>
+          <p>アプリを開いたとき、設定時刻を過ぎていれば朝・夕それぞれ1日1回お知らせします。端末へのPush通知は、下の設定で別途登録が必要です。</p>
           {[
             ['morning', '朝'],
             ['evening', '夕方'],

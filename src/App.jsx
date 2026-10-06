@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
 import { HomeView } from './components/HomeView'
 import { LoanView } from './components/LoanView'
 import { LoginScreen, PasswordRecoveryScreen } from './components/LoginScreen'
@@ -66,6 +66,9 @@ import { deriveSyncStatus } from './lib/syncStatus'
 import { shoppingCategoryForInventory, statusForQuantity } from './lib/inventory'
 import './App.css'
 import { AppIcon } from './components/AppIcon'
+import { PwaUpdateNotice } from './components/PwaUpdateNotice'
+import { pushDevice, updatePushSession, stopPushBeforeSignOut } from './lib/browserPush'
+import { PUSH_STOP_WARNING } from './lib/pushDevice'
 
 const MEMBER_CACHE_KEY = 'futari-wallet-member-v1'
 
@@ -96,7 +99,7 @@ function LoadingScreen({ message = '読み込んでいます…' }) {
   )
 }
 
-function App() {
+function HouseholdApp({ onBusyChange }) {
   const [session, setSession] = useState(null)
   const [authLoading, setAuthLoading] = useState(true)
   const [passwordRecovery, setPasswordRecovery] = useState(false)
@@ -107,6 +110,9 @@ function App() {
   const [online, setOnline] = useState(() => navigator.onLine)
   const [busy, setBusy] = useState(false)
   const [toast, setToast] = useState(null)
+  const pushState = useSyncExternalStore(pushDevice.subscribe, pushDevice.getSnapshot)
+  const sessionUserId = session?.user?.id
+  const activeMember = member?.user_id === sessionUserId ? member : null
 
   const {
     snapshot,
@@ -118,61 +124,79 @@ function App() {
     refresh,
     retrySync,
     clearLocalData,
-  } = useHouseholdData(Boolean(member))
+  } = useHouseholdData(activeMember?.user_id)
   const syncStatus = deriveSyncStatus({ online, syncState, realtimeState })
 
   useEffect(() => {
     let mounted = true
-    supabase.auth.getSession().then(({ data }) => {
-      if (mounted) {
-        setSession(data.session)
-        setAuthLoading(false)
+    let authEventSeen = false
+    let currentUserId = null
+    const applySession = (nextSession) => {
+      updatePushSession(nextSession)
+      const nextUserId = nextSession?.user?.id || null
+      if (!nextUserId || (currentUserId && currentUserId !== nextUserId)) {
+        clearLocalData()
+        try { localStorage.removeItem(MEMBER_CACHE_KEY) } catch { /* Storage disabled. */ }
       }
-    })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
-      setSession(nextSession)
-      if (event === 'PASSWORD_RECOVERY') setPasswordRecovery(true)
-      setAuthLoading(false)
-      if (!nextSession) {
+      if (currentUserId !== nextUserId || !nextUserId) {
         setMember(null)
+        setToast(null)
+        setAccessError('')
+        setTab('home')
         setPasswordRecovery(false)
       }
+      currentUserId = nextUserId
+      setSession(nextSession)
+      setAuthLoading(false)
+    }
+    supabase.auth.getSession().then(({ data }) => {
+      if (mounted && !authEventSeen) applySession(data.session)
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      if (!mounted) return
+      authEventSeen = true
+      applySession(nextSession)
+      if (event === 'PASSWORD_RECOVERY') setPasswordRecovery(true)
     })
     return () => {
       mounted = false
       subscription.unsubscribe()
     }
-  }, [])
+  }, [clearLocalData])
 
   useEffect(() => {
-    if (!session) return undefined
+    if (!sessionUserId) return undefined
     let mounted = true
     setMemberLoading(true)
+    setMember(null)
     setAccessError('')
     supabase
       .from('app_members')
       .select('user_id, display_name')
-      .eq('user_id', session.user.id)
+      .eq('user_id', sessionUserId)
       .maybeSingle()
       .then(({ data, error: memberError }) => {
         if (!mounted) return
         if (memberError) {
-          const cachedMember = readCachedMember(session.user.id)
+          const cachedMember = readCachedMember(sessionUserId)
           if (!navigator.onLine && cachedMember) {
             setMember(cachedMember)
           } else {
+            clearLocalData()
             setAccessError(messageFromError(memberError))
           }
         } else if (!data) {
+          clearLocalData()
+          try { localStorage.removeItem(MEMBER_CACHE_KEY) } catch { /* Storage disabled. */ }
           setAccessError('このアカウントは夫婦メンバーとして登録されていません。')
         } else {
           setMember(data)
-          localStorage.setItem(MEMBER_CACHE_KEY, JSON.stringify(data))
+          try { localStorage.setItem(MEMBER_CACHE_KEY, JSON.stringify(data)) } catch { /* Online access still works. */ }
         }
         setMemberLoading(false)
       })
     return () => { mounted = false }
-  }, [session])
+  }, [sessionUserId, clearLocalData])
 
   useEffect(() => {
     const updateOnline = () => setOnline(navigator.onLine)
@@ -219,11 +243,26 @@ function App() {
     setToast({ type: 'success', message })
   }, [])
 
+  useEffect(() => {
+    onBusyChange(busy || pushState.busy)
+  }, [busy, pushState.busy, onBusyChange])
+
+  useEffect(() => {
+    const recheck = () => { if (document.visibilityState === 'visible') void pushDevice.inspect() }
+    window.addEventListener('online', recheck)
+    document.addEventListener('visibilitychange', recheck)
+    return () => {
+      window.removeEventListener('online', recheck)
+      document.removeEventListener('visibilitychange', recheck)
+    }
+  }, [])
+
   useDailyReminder({
-    memberId: member?.user_id,
+    memberId: activeMember?.user_id,
     preferences: snapshot.notificationPreferences,
     snapshot,
     onReminder: showReminder,
+    suppressOsNotification: pushState.suppressOs,
   })
 
   async function handleOpenReceipt(path) {
@@ -240,13 +279,15 @@ function App() {
   }
 
   async function handleSignOut() {
+    const pushStopped = await stopPushBeforeSignOut()
+    if (!pushStopped) window.alert(PUSH_STOP_WARNING)
     const { error: signOutError } = await supabase.auth.signOut()
     if (signOutError) {
       setToast({ type: 'error', message: messageFromError(signOutError) })
       return
     }
     clearLocalData()
-    localStorage.removeItem(MEMBER_CACHE_KEY)
+    try { localStorage.removeItem(MEMBER_CACHE_KEY) } catch { /* Storage disabled. */ }
   }
 
   if (authLoading) return <LoadingScreen />
@@ -267,7 +308,7 @@ function App() {
     )
   }
 
-  if (!member) return <LoadingScreen />
+  if (!activeMember) return <LoadingScreen />
 
   const showInitialLoader = loading && snapshot.loans.length === 0 && snapshot.items.length === 0
 
@@ -525,6 +566,8 @@ function App() {
         busy={busy}
         onBack={() => setTab('home')}
         onSignOut={handleSignOut}
+        pushState={pushState}
+        pushActions={{ onEnable: pushDevice.enable, onStop: pushDevice.stop, onRefresh: pushDevice.inspect, onRemove: pushDevice.remove }}
         onSave={(input) => runAction(
           () => saveNotificationPreferences({ ...input, user_id: member.user_id }),
           '朝夕のお知らせ設定を保存しました',
@@ -596,4 +639,10 @@ function App() {
   )
 }
 
-export default App
+export default function App({ updater }) {
+  const [busy, setBusy] = useState(false)
+  return <>
+    {updater && <PwaUpdateNotice updater={updater} busy={busy} />}
+    <HouseholdApp onBusyChange={setBusy} />
+  </>
+}

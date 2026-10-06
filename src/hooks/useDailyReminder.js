@@ -13,8 +13,9 @@ function reminderMessage(summary) {
   return parts.length > 0 ? parts.join('・') : '今日の共有Todoはありません。'
 }
 
-export function useDailyReminder({ memberId, preferences, snapshot, onReminder }) {
+export function useDailyReminder({ memberId, preferences, snapshot, onReminder, suppressOsNotification = false }) {
   useEffect(() => {
+    let cancelled = false
     if (!memberId || !preferences || !snapshot.notificationSchemaReady) return undefined
     const now = new Date()
     const period = reminderPeriod(now, preferences)
@@ -38,16 +39,16 @@ export function useDailyReminder({ memberId, preferences, snapshot, onReminder }
     const body = reminderMessage(summary)
     onReminder?.(`${title}：${body}`)
 
-    if ('Notification' in window && Notification.permission === 'granted') {
+    if (!suppressOsNotification && 'Notification' in window && Notification.permission === 'granted') {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.ready
-          .then((registration) => registration.showNotification(title, { body, tag: key }))
-          .catch(() => new Notification(title, { body, tag: key }))
+          .then((registration) => { if (!cancelled) return registration.showNotification(title, { body, tag: key }) })
+          .catch(() => { /* OS notifications are optional; preserve the in-app summary. */ })
       } else {
         new Notification(title, { body, tag: key })
       }
     }
     localStorage.setItem(key, 'shown')
-    return undefined
-  }, [memberId, onReminder, preferences, snapshot])
+    return () => { cancelled = true }
+  }, [memberId, onReminder, preferences, snapshot, suppressOsNotification])
 }
